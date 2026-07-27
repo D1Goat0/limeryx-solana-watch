@@ -18,7 +18,7 @@ export const Route = createFileRoute("/signup")({
       },
     ],
   }),
-  component: SignUp;
+  component: SignUp,
 });
 
 function SignUp() {
