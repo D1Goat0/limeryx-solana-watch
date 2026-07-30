@@ -130,7 +130,6 @@ function Dashboard() {
   const tracked = [account.wallet, ...account.watchlist];
 
   return (
-
     <div className="mx-auto max-w-6xl px-4 py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -138,6 +137,12 @@ function Dashboard() {
           <h1 className="mt-4 text-lg text-foreground">
             LIVE FEED<span className="blink text-primary">_</span>
           </h1>
+          <p className="mt-4 text-base text-muted-foreground">
+            {account.handle} · connected {short(account.wallet)} · {account.terminal}{" "}
+            <button onClick={signOut} className="ml-2 text-primary underline">
+              disconnect
+            </button>
+          </p>
         </div>
         <div className="flex flex-wrap gap-4">
           {[
@@ -162,22 +167,58 @@ function Dashboard() {
               className="flex flex-col gap-2 sm:flex-row"
               onSubmit={(e) => {
                 e.preventDefault();
-                setAddress(input.trim());
+                const a = input.trim();
+                if (!isSolanaAddress(a)) return;
+                addWatch(a);
+                setAddress(a);
+                setInput("");
               }}
             >
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Solana wallet address"
+                placeholder="Add a Solana wallet address to track"
                 className="w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
               />
               <button
                 type="submit"
                 className="pixel-text bg-primary px-5 py-3 text-[9px] text-primary-foreground transition hover:bg-accent"
               >
-                TRACK
+                ADD + TRACK
               </button>
             </form>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {tracked.map((w) => (
+                <span
+                  key={w}
+                  className={`flex items-center gap-2 border px-3 py-2 ${
+                    w === address ? "border-primary" : "border-border"
+                  }`}
+                >
+                  <button
+                    onClick={() => setAddress(w)}
+                    className="pixel-text text-[7px] text-foreground hover:text-primary"
+                  >
+                    {w === account.wallet ? "MINE · " : ""}
+                    {short(w)}
+                  </button>
+                  {w !== account.wallet && (
+                    <button
+                      onClick={() => {
+                        removeWatch(w);
+                        if (address === w) setAddress(account.wallet);
+                      }}
+                      aria-label={`Remove ${short(w)}`}
+                      className="pixel-text text-[7px] text-destructive"
+                    >
+                      X
+                    </button>
+                  )}
+                </span>
+              ))}
+            </div>
+
 
             {wallet.isError && (
               <p className="mt-4 text-base text-destructive">
