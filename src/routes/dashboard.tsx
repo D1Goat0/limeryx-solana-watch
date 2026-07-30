@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getNetworkStats, getTopTraders, getWallet } from "@/lib/solana.functions";
 import { integrations } from "@/lib/integrations";
+import { isSolanaAddress, useAccount } from "@/lib/wallet-store";
+
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -66,13 +68,40 @@ function LiveTag() {
   );
 }
 
+function ConnectGate() {
+  return (
+    <div className="mx-auto max-w-lg px-4 py-24 text-center">
+      <p className="pixel-text text-[9px] text-primary">WALLET REQUIRED</p>
+      <h1 className="mt-6 text-lg text-foreground">
+        CONNECT TO CONTINUE<span className="blink text-primary">_</span>
+      </h1>
+      <p className="mt-6 text-lg text-muted-foreground">
+        The dashboard tracks the wallet on your account. Create an account and connect a wallet address
+        to unlock it.
+      </p>
+      <Link
+        to="/signup"
+        className="pixel-text mt-8 inline-block bg-primary px-6 py-4 text-[10px] text-primary-foreground transition hover:bg-accent"
+      >
+        CONNECT WALLET
+      </Link>
+    </div>
+  );
+}
+
 function Dashboard() {
+  const { account, ready, addWatch, removeWatch, signOut } = useAccount();
+
   const statsFn = useServerFn(getNetworkStats);
   const tradersFn = useServerFn(getTopTraders);
   const walletFn = useServerFn(getWallet);
 
-  const [input, setInput] = useState(DEFAULT_WALLET);
+  const [input, setInput] = useState("");
   const [address, setAddress] = useState(DEFAULT_WALLET);
+
+  useEffect(() => {
+    if (account?.wallet) setAddress(account.wallet);
+  }, [account?.wallet]);
 
   const stats = useQuery({
     queryKey: ["network-stats"],
@@ -89,10 +118,16 @@ function Dashboard() {
     queryFn: () => walletFn({ data: { address } }),
     refetchInterval: 15_000,
     retry: false,
+    enabled: Boolean(account),
   });
 
   const fmt = (n: number | null | undefined, d = 2) =>
     n === null || n === undefined ? "····" : n.toLocaleString("en-US", { maximumFractionDigits: d });
+
+  if (!ready) return <div className="px-4 py-24 text-center text-base text-muted-foreground">Loading…</div>;
+  if (!account) return <ConnectGate />;
+
+  const tracked = [account.wallet, ...account.watchlist];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
@@ -102,6 +137,12 @@ function Dashboard() {
           <h1 className="mt-4 text-lg text-foreground">
             LIVE FEED<span className="blink text-primary">_</span>
           </h1>
+          <p className="mt-4 text-base text-muted-foreground">
+            {account.handle} · connected {short(account.wallet)} · {account.terminal}{" "}
+            <button onClick={signOut} className="ml-2 text-primary underline">
+              disconnect
+            </button>
+          </p>
         </div>
         <div className="flex flex-wrap gap-4">
           {[
@@ -126,22 +167,58 @@ function Dashboard() {
               className="flex flex-col gap-2 sm:flex-row"
               onSubmit={(e) => {
                 e.preventDefault();
-                setAddress(input.trim());
+                const a = input.trim();
+                if (!isSolanaAddress(a)) return;
+                addWatch(a);
+                setAddress(a);
+                setInput("");
               }}
             >
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Solana wallet address"
+                placeholder="Add a Solana wallet address to track"
                 className="w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
               />
               <button
                 type="submit"
                 className="pixel-text bg-primary px-5 py-3 text-[9px] text-primary-foreground transition hover:bg-accent"
               >
-                TRACK
+                ADD + TRACK
               </button>
             </form>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {tracked.map((w) => (
+                <span
+                  key={w}
+                  className={`flex items-center gap-2 border px-3 py-2 ${
+                    w === address ? "border-primary" : "border-border"
+                  }`}
+                >
+                  <button
+                    onClick={() => setAddress(w)}
+                    className="pixel-text text-[7px] text-foreground hover:text-primary"
+                  >
+                    {w === account.wallet ? "MINE · " : ""}
+                    {short(w)}
+                  </button>
+                  {w !== account.wallet && (
+                    <button
+                      onClick={() => {
+                        removeWatch(w);
+                        if (address === w) setAddress(account.wallet);
+                      }}
+                      aria-label={`Remove ${short(w)}`}
+                      className="pixel-text text-[7px] text-destructive"
+                    >
+                      X
+                    </button>
+                  )}
+                </span>
+              ))}
+            </div>
+
 
             {wallet.isError && (
               <p className="mt-4 text-base text-destructive">
