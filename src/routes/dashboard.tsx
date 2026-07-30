@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getNetworkStats, getTopTraders, getWallet } from "@/lib/solana.functions";
 import { integrations } from "@/lib/integrations";
+import { isSolanaAddress, useAccount } from "@/lib/wallet-store";
+
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
