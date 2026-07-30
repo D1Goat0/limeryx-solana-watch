@@ -68,13 +68,40 @@ function LiveTag() {
   );
 }
 
+function ConnectGate() {
+  return (
+    <div className="mx-auto max-w-lg px-4 py-24 text-center">
+      <p className="pixel-text text-[9px] text-primary">WALLET REQUIRED</p>
+      <h1 className="mt-6 text-lg text-foreground">
+        CONNECT TO CONTINUE<span className="blink text-primary">_</span>
+      </h1>
+      <p className="mt-6 text-lg text-muted-foreground">
+        The dashboard tracks the wallet on your account. Create an account and connect a wallet address
+        to unlock it.
+      </p>
+      <Link
+        to="/signup"
+        className="pixel-text mt-8 inline-block bg-primary px-6 py-4 text-[10px] text-primary-foreground transition hover:bg-accent"
+      >
+        CONNECT WALLET
+      </Link>
+    </div>
+  );
+}
+
 function Dashboard() {
+  const { account, ready, addWatch, removeWatch, signOut } = useAccount();
+
   const statsFn = useServerFn(getNetworkStats);
   const tradersFn = useServerFn(getTopTraders);
   const walletFn = useServerFn(getWallet);
 
-  const [input, setInput] = useState(DEFAULT_WALLET);
+  const [input, setInput] = useState("");
   const [address, setAddress] = useState(DEFAULT_WALLET);
+
+  useEffect(() => {
+    if (account?.wallet) setAddress(account.wallet);
+  }, [account?.wallet]);
 
   const stats = useQuery({
     queryKey: ["network-stats"],
@@ -91,12 +118,19 @@ function Dashboard() {
     queryFn: () => walletFn({ data: { address } }),
     refetchInterval: 15_000,
     retry: false,
+    enabled: Boolean(account),
   });
 
   const fmt = (n: number | null | undefined, d = 2) =>
     n === null || n === undefined ? "····" : n.toLocaleString("en-US", { maximumFractionDigits: d });
 
+  if (!ready) return <div className="px-4 py-24 text-center text-base text-muted-foreground">Loading…</div>;
+  if (!account) return <ConnectGate />;
+
+  const tracked = [account.wallet, ...account.watchlist];
+
   return (
+
     <div className="mx-auto max-w-6xl px-4 py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
