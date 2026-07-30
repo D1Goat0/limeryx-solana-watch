@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { integrations } from "@/lib/integrations";
+import { connectPhantom, isSolanaAddress, saveAccount } from "@/lib/wallet-store";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -9,12 +10,12 @@ export const Route = createFileRoute("/signup")({
       {
         name: "description",
         content:
-          "Create your Limeryx account to track Solana wallets and X lists live and see daily top traders.",
+          "Create your Limeryx account and connect a Solana wallet address to track wallets and X lists live.",
       },
       { property: "og:title", content: "Sign Up — Limeryx" },
       {
         property: "og:description",
-        content: "Create a Limeryx account and start tracking Solana wallets in real time.",
+        content: "Create a Limeryx account and connect a wallet to start tracking Solana in real time.",
       },
     ],
   }),
@@ -24,6 +25,24 @@ export const Route = createFileRoute("/signup")({
 function SignUp() {
   const navigate = useNavigate();
   const [terminal, setTerminal] = useState(integrations[0].name);
+  const [handle, setHandle] = useState("");
+  const [wallet, setWallet] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
+
+  const walletOk = isSolanaAddress(wallet);
+
+  async function phantom() {
+    setError(null);
+    setConnecting(true);
+    try {
+      setWallet(await connectPhantom());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not connect wallet.");
+    } finally {
+      setConnecting(false);
+    }
+  }
 
   return (
     <div className="mx-auto flex max-w-lg flex-col px-4 py-20">
@@ -36,6 +55,11 @@ function SignUp() {
         className="panel panel-glow mt-10 space-y-6 p-7"
         onSubmit={(e) => {
           e.preventDefault();
+          if (!walletOk) {
+            setError("Connect a wallet or paste a valid Solana address to continue.");
+            return;
+          }
+          saveAccount({ handle: handle || "@degen", terminal, wallet: wallet.trim(), watchlist: [] });
           navigate({ to: "/dashboard" });
         }}
       >
@@ -43,6 +67,8 @@ function SignUp() {
           <span className="pixel-text text-[8px] text-muted-foreground">HANDLE</span>
           <input
             required
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
             placeholder="@degen"
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-lg text-foreground outline-none focus:border-primary"
           />
@@ -56,16 +82,31 @@ function SignUp() {
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-lg text-foreground outline-none focus:border-primary"
           />
         </label>
-        <label className="block">
-          <span className="pixel-text text-[8px] text-muted-foreground">PASSWORD</span>
+
+        <div>
+          <span className="pixel-text text-[8px] text-muted-foreground">CONNECT WALLET</span>
+          <button
+            type="button"
+            onClick={phantom}
+            disabled={connecting}
+            className="pixel-text mt-3 w-full border border-primary px-4 py-3 text-[9px] text-primary transition hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+          >
+            {connecting ? "CONNECTING…" : "CONNECT PHANTOM"}
+          </button>
           <input
-            required
-            type="password"
-            minLength={6}
-            placeholder="••••••••"
-            className="mt-3 w-full border border-border bg-input px-4 py-3 text-lg text-foreground outline-none focus:border-primary"
+            value={wallet}
+            onChange={(e) => setWallet(e.target.value)}
+            placeholder="…or paste your Solana wallet address"
+            className="mt-3 w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
           />
-        </label>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Public address only. Limeryx never asks for a private key or seed phrase — tracking reads
+            mainnet, it never needs to spend. Any site that asks for your secret key can drain you.
+          </p>
+          {wallet && !walletOk && (
+            <p className="mt-2 text-sm text-destructive">That doesn&apos;t look like a Solana address.</p>
+          )}
+        </div>
 
         <div>
           <span className="pixel-text text-[8px] text-muted-foreground">DEFAULT TERMINAL</span>
@@ -88,11 +129,13 @@ function SignUp() {
           </div>
         </div>
 
+        {error && <p className="text-base text-destructive">{error}</p>}
+
         <button
           type="submit"
-          className="pixel-text w-full bg-primary px-6 py-4 text-[10px] text-primary-foreground transition hover:bg-accent"
+          className="pixel-text w-full bg-primary px-6 py-4 text-[10px] text-primary-foreground transition hover:bg-accent disabled:opacity-50"
         >
-          CREATE ACCOUNT
+          CONNECT & CREATE ACCOUNT
         </button>
         <p className="text-center text-base text-muted-foreground">
           Already tracking?{" "}
