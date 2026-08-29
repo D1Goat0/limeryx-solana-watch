@@ -1,4 +1,4 @@
-import bgAsset from "@/assets/limeryx-bg.gif.asset.json";
+const bgUrl = "/img/limeryx-bg.gif";
 
 /**
  * Fixed animated backdrop: the rotating dot-sphere GIF over pure black so the
@@ -8,7 +8,7 @@ export function PixelBackground() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-black">
       <img
-        src={bgAsset.url}
+        src={bgUrl}
         alt=""
         className="absolute left-1/2 top-1/2 h-[130vmin] w-[130vmin] -translate-x-1/2 -translate-y-1/2 object-contain opacity-70"
       />
