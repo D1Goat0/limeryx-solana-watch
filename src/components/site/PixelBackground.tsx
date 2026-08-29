@@ -1,4 +1,4 @@
-import bgAsset from "@/assets/limeryx-bg.gif.asset.json";
+const bgUrl = "/img/limeryx-bg.gif";
 
 /**
  * Fixed animated backdrop: the rotating dot-sphere GIF over pure black so the

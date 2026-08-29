@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import logoAsset from "@/assets/limeryx-logo.jpeg.asset.json";
+
+const logoUrl = "/img/limeryx-logo.jpeg";
 
 export function Logo({ size = 34, withText = true }: { size?: number; withText?: boolean }) {
   return (
     <Link to="/" className="group flex items-center gap-3">
       <img
-        src={logoAsset.url}
+        src={logoUrl}
         alt="Limeryx pixel skull logo"
         width={size}
         height={size}
