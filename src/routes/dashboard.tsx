@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getNetworkStats, getTopTraders, getWallet } from "@/lib/solana.functions";
 import { integrations } from "@/lib/integrations";
-import { isSolanaAddress, useAccount } from "@/lib/wallet-store";
+import { useAccount } from "@/lib/wallet-store";
 
 
 export const Route = createFileRoute("/dashboard")({
