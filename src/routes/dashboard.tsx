@@ -127,7 +127,7 @@ function Dashboard() {
   if (!ready) return <div className="px-4 py-24 text-center text-base text-muted-foreground">Loading…</div>;
   if (!account) return <ConnectGate />;
 
-  const tracked = [account.wallet, ...account.watchlist];
+  const tracked = [account.wallet, ...account.watchlist].filter(Boolean);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
