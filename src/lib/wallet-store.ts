@@ -53,8 +53,8 @@ export function useAccount() {
   const addWatch = useCallback(
     (address: string) => {
       const a = read();
-      if (!a || !isSolanaAddress(address)) return;
       const addr = address.trim();
+      if (!a || !addr) return;
       if (a.watchlist.includes(addr)) return;
       saveAccount({ ...a, watchlist: [...a.watchlist, addr] });
     },
