@@ -46,6 +46,12 @@ export function SiteFooter() {
         <p className="text-sm text-muted-foreground">
           Limeryx — real-time Solana wallet & X list intelligence. Not financial advice.
         </p>
+        <Link
+          to="/admin"
+          className="pixel-text text-[8px] text-muted-foreground/60 transition-colors hover:text-primary"
+        >
+          ADMIN
+        </Link>
       </div>
     </footer>
   );

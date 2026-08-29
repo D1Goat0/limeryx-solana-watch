@@ -4,6 +4,7 @@ const KEY = "limeryx.account";
 
 export type Account = {
   handle: string;
+  email: string;
   terminal: string;
   wallet: string;
   watchlist: string[];
@@ -20,7 +21,9 @@ function read(): Account | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const a = JSON.parse(raw) as Account;
-    return a && typeof a.wallet === "string" ? { ...a, watchlist: a.watchlist ?? [] } : null;
+    return a && typeof a.wallet === "string"
+      ? { ...a, email: a.email ?? "", watchlist: a.watchlist ?? [] }
+      : null;
   } catch {
     return null;
   }

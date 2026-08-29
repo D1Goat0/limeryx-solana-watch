@@ -26,6 +26,7 @@ function SignUp() {
   const navigate = useNavigate();
   const [terminal, setTerminal] = useState(integrations[0].name);
   const [handle, setHandle] = useState("");
+  const [email, setEmail] = useState("");
   const [wallet, setWallet] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -58,7 +59,7 @@ function SignUp() {
             return;
           }
 
-          saveAccount({ handle: handle || "@degen", terminal, wallet: wallet.trim(), watchlist: [] });
+          saveAccount({ handle: handle || "@degen", email, terminal, wallet: wallet.trim(), watchlist: [] });
           navigate({ to: "/dashboard" });
         }}
       >
@@ -77,6 +78,8 @@ function SignUp() {
           <input
             required
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="you@limeryx.xyz"
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-lg text-foreground outline-none focus:border-primary"
           />

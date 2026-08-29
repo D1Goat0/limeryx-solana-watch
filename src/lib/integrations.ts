@@ -1,3 +1,10 @@
+import axiom from "@/assets/axiom-logo.png.asset.json";
+import padre from "@/assets/padre-logo.png.asset.json";
+import photon from "@/assets/photon-sol-logo.png.asset.json";
+import bullx from "@/assets/bullx-logo.png.asset.json";
+import gmgn from "@/assets/gmgn-logo.png.asset.json";
+import jup from "@/assets/jup-logo.png.asset.json";
+
 export interface Integration {
   name: string;
   logo: string;
@@ -8,37 +15,37 @@ export interface Integration {
 export const integrations: Integration[] = [
   {
     name: "Axiom",
-    logo: "/img/axiom-logo.png",
+    logo: axiom.url,
     href: "https://axiom.trade",
     blurb: "One-click routing from any Limeryx alert straight into Axiom.",
   },
   {
     name: "Padre.gg",
-    logo: "/img/padre-logo.png",
+    logo: padre.url,
     href: "https://www.padre.gg",
     blurb: "Mirror tracked wallets into your Padre watchlists in real time.",
   },
   {
     name: "Photon",
-    logo: "/img/photon-sol-logo.png",
+    logo: photon.url,
     href: "https://photon-sol.tinyastro.io",
     blurb: "Deep-link every token feed straight into a Photon buy panel.",
   },
   {
     name: "BullX",
-    logo: "/img/bullx-logo.png",
+    logo: bullx.url,
     href: "https://bullx.io",
     blurb: "Push live wallet signals into BullX with a single hotkey.",
   },
   {
     name: "GMGN",
-    logo: "/img/gmgn-logo.png",
+    logo: gmgn.url,
     href: "https://gmgn.ai",
     blurb: "Cross-check smart-money labels against GMGN wallet profiles.",
   },
   {
     name: "Jupiter",
-    logo: "/img/jup-logo.png",
+    logo: jup.url,
     href: "https://jup.ag",
     blurb: "Route the fill through Jupiter for best on-chain execution.",
   },
