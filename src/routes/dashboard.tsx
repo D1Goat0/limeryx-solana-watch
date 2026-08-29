@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getNetworkStats, getTopTraders, getWallet } from "@/lib/solana.functions";
 import { integrations } from "@/lib/integrations";
-import { isSolanaAddress, useAccount } from "@/lib/wallet-store";
+import { useAccount } from "@/lib/wallet-store";
 
 
 export const Route = createFileRoute("/dashboard")({
@@ -127,7 +127,7 @@ function Dashboard() {
   if (!ready) return <div className="px-4 py-24 text-center text-base text-muted-foreground">Loading…</div>;
   if (!account) return <ConnectGate />;
 
-  const tracked = [account.wallet, ...account.watchlist];
+  const tracked = [account.wallet, ...account.watchlist].filter(Boolean);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
@@ -138,7 +138,8 @@ function Dashboard() {
             LIVE FEED<span className="blink text-primary">_</span>
           </h1>
           <p className="mt-4 text-base text-muted-foreground">
-            {account.handle} · connected {short(account.wallet)} · {account.terminal}{" "}
+            {account.handle} · {account.wallet ? short(account.wallet) : "no wallet added"} ·{" "}
+            {account.terminal}{" "}
             <button onClick={signOut} className="ml-2 text-primary underline">
               disconnect
             </button>
@@ -168,7 +169,7 @@ function Dashboard() {
               onSubmit={(e) => {
                 e.preventDefault();
                 const a = input.trim();
-                if (!isSolanaAddress(a)) return;
+                if (!a) return;
                 addWatch(a);
                 setAddress(a);
                 setInput("");

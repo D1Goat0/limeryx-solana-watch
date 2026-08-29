@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { integrations } from "@/lib/integrations";
-import { isSolanaAddress, saveAccount } from "@/lib/wallet-store";
+import { saveAccount } from "@/lib/wallet-store";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -29,7 +29,6 @@ function SignUp() {
   const [wallet, setWallet] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const walletOk = isSolanaAddress(wallet);
 
   return (
     <div className="mx-auto flex max-w-lg flex-col px-4 py-20">
@@ -42,10 +41,7 @@ function SignUp() {
         className="panel panel-glow mt-10 space-y-6 p-7"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!walletOk) {
-            setError("Connect a wallet or paste a valid Solana address to continue.");
-            return;
-          }
+          setError(null);
           saveAccount({ handle: handle || "@degen", terminal, wallet: wallet.trim(), watchlist: [] });
           navigate({ to: "/dashboard" });
         }}
@@ -71,20 +67,17 @@ function SignUp() {
         </label>
 
         <div>
-          <span className="pixel-text text-[8px] text-muted-foreground">CONNECT WALLET</span>
+          <span className="pixel-text text-[8px] text-muted-foreground">WALLET (OPTIONAL)</span>
           <input
             value={wallet}
             onChange={(e) => setWallet(e.target.value)}
-            placeholder="Paste your Solana wallet address"
+            placeholder="Paste a wallet address to track"
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
           />
           <p className="mt-3 text-sm text-muted-foreground">
-            Public address only. Limeryx never asks for a private key or seed phrase — tracking reads
-            mainnet, it never needs to spend. Any site that asks for your secret key can drain you.
+            Optional — you can add wallets later from the dashboard. Limeryx never asks for a private
+            key or seed phrase; tracking only ever reads mainnet.
           </p>
-          {wallet && !walletOk && (
-            <p className="mt-2 text-sm text-destructive">That doesn&apos;t look like a Solana address.</p>
-          )}
         </div>
 
         <div>
