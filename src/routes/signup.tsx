@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { integrations } from "@/lib/integrations";
-import { connectPhantom, isSolanaAddress, saveAccount } from "@/lib/wallet-store";
+import { isSolanaAddress, saveAccount } from "@/lib/wallet-store";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -28,21 +28,8 @@ function SignUp() {
   const [handle, setHandle] = useState("");
   const [wallet, setWallet] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [connecting, setConnecting] = useState(false);
 
   const walletOk = isSolanaAddress(wallet);
-
-  async function phantom() {
-    setError(null);
-    setConnecting(true);
-    try {
-      setWallet(await connectPhantom());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not connect wallet.");
-    } finally {
-      setConnecting(false);
-    }
-  }
 
   return (
     <div className="mx-auto flex max-w-lg flex-col px-4 py-20">
@@ -85,18 +72,10 @@ function SignUp() {
 
         <div>
           <span className="pixel-text text-[8px] text-muted-foreground">CONNECT WALLET</span>
-          <button
-            type="button"
-            onClick={phantom}
-            disabled={connecting}
-            className="pixel-text mt-3 w-full border border-primary px-4 py-3 text-[9px] text-primary transition hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-          >
-            {connecting ? "CONNECTING…" : "CONNECT PHANTOM"}
-          </button>
           <input
             value={wallet}
             onChange={(e) => setWallet(e.target.value)}
-            placeholder="…or paste your Solana wallet address"
+            placeholder="Paste your Solana wallet address"
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
           />
           <p className="mt-3 text-sm text-muted-foreground">
