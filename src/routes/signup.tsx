@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { integrations } from "@/lib/integrations";
-import { saveAccount } from "@/lib/wallet-store";
+import { saveAccount, isSolanaAddress } from "@/lib/wallet-store";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -27,6 +27,8 @@ function SignUp() {
   const [terminal, setTerminal] = useState(integrations[0].name);
   const [handle, setHandle] = useState("");
   const [wallet, setWallet] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
 
@@ -42,6 +44,20 @@ function SignUp() {
         onSubmit={(e) => {
           e.preventDefault();
           setError(null);
+
+          if (!isSolanaAddress(wallet)) {
+            setError("Enter a valid Solana wallet address to track.");
+            return;
+          }
+          if (password.length < 8) {
+            setError("Password must be at least 8 characters.");
+            return;
+          }
+          if (password !== confirmPassword) {
+            setError("Passwords don't match.");
+            return;
+          }
+
           saveAccount({ handle: handle || "@degen", terminal, wallet: wallet.trim(), watchlist: [] });
           navigate({ to: "/dashboard" });
         }}
@@ -67,17 +83,39 @@ function SignUp() {
         </label>
 
         <div>
-          <span className="pixel-text text-[8px] text-muted-foreground">WALLET (OPTIONAL)</span>
+          <span className="pixel-text text-[8px] text-muted-foreground">WALLET</span>
           <input
+            required
             value={wallet}
             onChange={(e) => setWallet(e.target.value)}
             placeholder="Paste a wallet address to track"
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
           />
           <p className="mt-3 text-sm text-muted-foreground">
-            Optional — you can add wallets later from the dashboard. Limeryx never asks for a private
-            key or seed phrase; tracking only ever reads mainnet.
+            Required — Limeryx never asks for a private key or seed phrase; tracking only ever reads
+            mainnet.
           </p>
+        </div>
+
+        <div>
+          <span className="pixel-text text-[8px] text-muted-foreground">PASSWORD</span>
+          <input
+            required
+            type="password"
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="At least 8 characters"
+            className="mt-3 w-full border border-border bg-input px-4 py-3 text-lg text-foreground outline-none focus:border-primary"
+          />
+          <input
+            required
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm password"
+            className="mt-3 w-full border border-border bg-input px-4 py-3 text-lg text-foreground outline-none focus:border-primary"
+          />
         </div>
 
         <div>
