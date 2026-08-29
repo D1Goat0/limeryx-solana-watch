@@ -115,6 +115,7 @@ function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
         <div className="panel mt-4 divide-y divide-border">
           <Row label="HANDLE" value={account.handle} />
           <Row label="EMAIL" value={account.email || "—"} />
+          <Row label="LIME KEY" value={account.limeKey || "—"} />
           <Row label="WALLET" value={account.wallet || "—"} />
           <Row label="DEFAULT TERMINAL" value={account.terminal} />
           <Row label="WATCHLIST" value={`${account.watchlist.length} address(es)`} />

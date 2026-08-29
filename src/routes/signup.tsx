@@ -28,6 +28,7 @@ function SignUp() {
   const [handle, setHandle] = useState("");
   const [email, setEmail] = useState("");
   const [wallet, setWallet] = useState("");
+  const [limeKey, setLimeKey] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +51,10 @@ function SignUp() {
             setError("Enter a valid Solana wallet address to track.");
             return;
           }
+          if (!limeKey.trim()) {
+            setError("A Lime Key is required to create an account.");
+            return;
+          }
           if (password.length < 8) {
             setError("Password must be at least 8 characters.");
             return;
@@ -59,7 +64,14 @@ function SignUp() {
             return;
           }
 
-          saveAccount({ handle: handle || "@degen", email, terminal, wallet: wallet.trim(), watchlist: [] });
+          saveAccount({
+            handle: handle || "@degen",
+            email,
+            limeKey: limeKey.trim(),
+            terminal,
+            wallet: wallet.trim(),
+            watchlist: [],
+          });
           navigate({ to: "/dashboard" });
         }}
       >
@@ -97,6 +109,21 @@ function SignUp() {
           <p className="mt-3 text-sm text-muted-foreground">
             Required — Limeryx never asks for a private key or seed phrase; tracking only ever reads
             mainnet.
+          </p>
+        </div>
+
+        <div>
+          <span className="pixel-text text-[8px] text-muted-foreground">LIME KEY</span>
+          <input
+            required
+            value={limeKey}
+            onChange={(e) => setLimeKey(e.target.value)}
+            placeholder="Your Limeryx platform identifier"
+            className="mt-3 w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
+          />
+          <p className="mt-3 text-sm text-muted-foreground">
+            Required — your Limeryx-issued platform identifier. This is not a wallet address, private
+            key, or seed phrase.
           </p>
         </div>
 

@@ -5,6 +5,7 @@ const KEY = "limeryx.account";
 export type Account = {
   handle: string;
   email: string;
+  limeKey: string;
   terminal: string;
   wallet: string;
   watchlist: string[];
@@ -22,7 +23,7 @@ function read(): Account | null {
     if (!raw) return null;
     const a = JSON.parse(raw) as Account;
     return a && typeof a.wallet === "string"
-      ? { ...a, email: a.email ?? "", watchlist: a.watchlist ?? [] }
+      ? { ...a, email: a.email ?? "", limeKey: a.limeKey ?? "", watchlist: a.watchlist ?? [] }
       : null;
   } catch {
     return null;
