@@ -85,18 +85,10 @@ function SignUp() {
 
         <div>
           <span className="pixel-text text-[8px] text-muted-foreground">CONNECT WALLET</span>
-          <button
-            type="button"
-            onClick={phantom}
-            disabled={connecting}
-            className="pixel-text mt-3 w-full border border-primary px-4 py-3 text-[9px] text-primary transition hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-          >
-            {connecting ? "CONNECTING…" : "CONNECT PHANTOM"}
-          </button>
           <input
             value={wallet}
             onChange={(e) => setWallet(e.target.value)}
-            placeholder="…or paste your Solana wallet address"
+            placeholder="Paste your Solana wallet address"
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
           />
           <p className="mt-3 text-sm text-muted-foreground">
