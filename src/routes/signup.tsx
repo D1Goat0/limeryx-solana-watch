@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { integrations } from "@/lib/integrations";
-import { connectPhantom, isSolanaAddress, saveAccount } from "@/lib/wallet-store";
+import { isSolanaAddress, saveAccount } from "@/lib/wallet-store";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -28,21 +28,8 @@ function SignUp() {
   const [handle, setHandle] = useState("");
   const [wallet, setWallet] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [connecting, setConnecting] = useState(false);
 
   const walletOk = isSolanaAddress(wallet);
-
-  async function phantom() {
-    setError(null);
-    setConnecting(true);
-    try {
-      setWallet(await connectPhantom());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not connect wallet.");
-    } finally {
-      setConnecting(false);
-    }
-  }
 
   return (
     <div className="mx-auto flex max-w-lg flex-col px-4 py-20">
