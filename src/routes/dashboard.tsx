@@ -138,7 +138,8 @@ function Dashboard() {
             LIVE FEED<span className="blink text-primary">_</span>
           </h1>
           <p className="mt-4 text-base text-muted-foreground">
-            {account.handle} · connected {short(account.wallet)} · {account.terminal}{" "}
+            {account.handle} · {account.wallet ? short(account.wallet) : "no wallet added"} ·{" "}
+            {account.terminal}{" "}
             <button onClick={signOut} className="ml-2 text-primary underline">
               disconnect
             </button>
