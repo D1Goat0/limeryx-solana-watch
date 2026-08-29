@@ -169,7 +169,7 @@ function Dashboard() {
               onSubmit={(e) => {
                 e.preventDefault();
                 const a = input.trim();
-                if (!isSolanaAddress(a)) return;
+                if (!a) return;
                 addWatch(a);
                 setAddress(a);
                 setInput("");
