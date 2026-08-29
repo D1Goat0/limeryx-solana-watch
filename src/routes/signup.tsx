@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { integrations } from "@/lib/integrations";
-import { isSolanaAddress, saveAccount } from "@/lib/wallet-store";
+import { saveAccount } from "@/lib/wallet-store";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
