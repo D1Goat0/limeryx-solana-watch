@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Pin the Nitro build target to Netlify. Without this it defaults to the
+  // "cloudflare-module" preset and outputs to .output/, which Netlify's
+  // deploy step won't find (it expects dist/ + .netlify/functions-internal/).
+  nitro: {
+    preset: "netlify",
+  },
 });
