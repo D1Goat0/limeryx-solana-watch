@@ -29,7 +29,6 @@ function SignUp() {
   const [wallet, setWallet] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const walletOk = isSolanaAddress(wallet);
 
   return (
     <div className="mx-auto flex max-w-lg flex-col px-4 py-20">
