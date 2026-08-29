@@ -41,10 +41,7 @@ function SignUp() {
         className="panel panel-glow mt-10 space-y-6 p-7"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!walletOk) {
-            setError("Connect a wallet or paste a valid Solana address to continue.");
-            return;
-          }
+          setError(null);
           saveAccount({ handle: handle || "@degen", terminal, wallet: wallet.trim(), watchlist: [] });
           navigate({ to: "/dashboard" });
         }}
