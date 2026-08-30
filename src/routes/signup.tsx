@@ -105,7 +105,7 @@ function SignUp() {
         </label>
 
         <div>
-          <span className="pixel-text text-[8px] text-muted-foreground">PUBLICWALLET</span>
+          <span className="pixel-text text-[8px] text-muted-foreground">PUBLIC WALLET</span>
           <input
             required
             value={wallet}
