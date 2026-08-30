@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { integrations } from "@/lib/integrations";
 import { saveAccount, isSolanaAddress } from "@/lib/wallet-store";
+import { submitAccount } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -24,6 +26,7 @@ export const Route = createFileRoute("/signup")({
 
 function SignUp() {
   const navigate = useNavigate();
+  const submitAccountFn = useServerFn(submitAccount);
   const [terminal, setTerminal] = useState(integrations[0].name);
   const [handle, setHandle] = useState("");
   const [email, setEmail] = useState("");
@@ -43,7 +46,7 @@ function SignUp() {
 
       <form
         className="panel panel-glow mt-10 space-y-6 p-7"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
           setError(null);
 
@@ -64,14 +67,18 @@ function SignUp() {
             return;
           }
 
-          saveAccount({
+          const account = {
             handle: handle || "@degen",
             email,
             limeKey: limeKey.trim(),
             terminal,
             wallet: wallet.trim(),
             watchlist: [],
-          });
+          };
+          saveAccount(account);
+          // Best-effort mirror to the admin store — don't block signup if this
+          // is unreachable (e.g. local dev without a Netlify environment).
+          submitAccountFn({ data: account }).catch(() => {});
           navigate({ to: "/dashboard" });
         }}
       >
