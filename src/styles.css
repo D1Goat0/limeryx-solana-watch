@@ -166,6 +166,15 @@
   }
 }
 
+@keyframes limeryx-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
 @utility blink {
   animation: limeryx-blink 1s steps(1, end) infinite;
 }

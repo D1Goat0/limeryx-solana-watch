@@ -1,15 +1,16 @@
-import bgAsset from "@/assets/limeryx-bg.gif.asset.json";
+import limeryxBg from "@/assets/limeryx-bg.png";
 
 /**
- * Fixed animated backdrop: the rotating dot-sphere GIF over pure black so the
+ * Fixed animated backdrop: a slowly-rotating dot-sphere over pure black so the
  * artwork blends seamlessly into the page, plus a subtle CRT scanline overlay.
  */
 export function PixelBackground() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-black">
       <img
-        src={bgAsset.url}
+        src={limeryxBg}
         alt=""
+        style={{ animation: "limeryx-spin 90s linear infinite" }}
         className="absolute left-1/2 top-1/2 h-[130vmin] w-[130vmin] -translate-x-1/2 -translate-y-1/2 object-contain opacity-70"
       />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,transparent_10%,rgba(0,0,0,0.85)_70%)]" />
