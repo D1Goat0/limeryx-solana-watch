@@ -276,17 +276,10 @@ function Dashboard() {
         </div>
 
         {/* X LISTS */}
-        <Card title="X LISTS" right={<LiveTag />}>
-          <ul className="space-y-4">
-            {xFeed.map((p) => (
-              <li key={p.handle} className="border-l-2 border-primary pl-3">
-                <p className="pixel-text text-[7px] text-primary">{p.list}</p>
-                <p className="mt-2 text-base text-foreground">{p.handle}</p>
-                <p className="text-base text-muted-foreground">{p.text}</p>
-              </li>
-            ))}
-          </ul>
+        <Card title="X LIVE FEED" right={<LiveTag />}>
+          <XTimeline />
         </Card>
+
       </div>
 
       {/* TOP TRADERS */}
