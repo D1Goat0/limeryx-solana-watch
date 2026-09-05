@@ -51,12 +51,11 @@ export function XTimeline() {
     setLoading(true);
     // X's embedded timeline hangs forever when rate-limited (HTTP 429);
     // treat a long silence as a failure so the fallback always appears.
+    let settled = false;
     const timeout = window.setTimeout(() => {
-      if (cancelled) return;
-      if (!target.querySelector("iframe")) {
-        setLoading(false);
-        setFailed(true);
-      }
+      if (cancelled || settled) return;
+      setLoading(false);
+      setFailed(true);
     }, 12_000);
     loadWidgets()
       .then((twttr) =>
