@@ -28,13 +28,8 @@ export const Route = createFileRoute("/dashboard")({
 
 const DEFAULT_WALLET = "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9";
 
-const xFeed = [
-  { handle: "@solanafloor", list: "SOL CORE", text: "Network TPS holding above baseline through the session." },
-  { handle: "@aeyakovenko", list: "SOL CORE", text: "Client diversity update shipping to mainnet validators." },
-  { handle: "@JupiterExchange", list: "DEX FLOW", text: "Routing volume climbing on perps and spot pairs." },
-  { handle: "@0xMert_", list: "SMART MONEY", text: "Watching fee payers rotate between two new mints." },
-  { handle: "@blknoiz06", list: "SMART MONEY", text: "Size showing up on-chain before the timeline notices." },
-];
+
+
 
 function short(a: string) {
   return `${a.slice(0, 4)}…${a.slice(-4)}`;
