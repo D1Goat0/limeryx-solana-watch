@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { getNetworkStats, getTopTraders, getWallet } from "@/lib/solana.functions";
 import { integrations } from "@/lib/integrations";
 import { useAccount } from "@/lib/wallet-store";
+import { XTimeline } from "@/components/site/XTimeline";
+
 
 
 export const Route = createFileRoute("/dashboard")({
