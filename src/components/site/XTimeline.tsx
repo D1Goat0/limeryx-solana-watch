@@ -49,6 +49,14 @@ export function XTimeline() {
     target.innerHTML = "";
     setFailed(false);
     setLoading(true);
+    // X's embedded timeline hangs forever when rate-limited (HTTP 429);
+    // treat a long silence as a failure so the fallback always appears.
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (cancelled || settled) return;
+      setLoading(false);
+      setFailed(true);
+    }, 12_000);
     loadWidgets()
       .then((twttr) =>
         twttr.widgets.createTimeline(
@@ -58,17 +66,20 @@ export function XTimeline() {
         ),
       )
       .then((el) => {
+        settled = true;
         if (cancelled) return;
         setLoading(false);
         if (!el) setFailed(true);
       })
       .catch(() => {
+        settled = true;
         if (cancelled) return;
         setLoading(false);
         setFailed(true);
       });
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
     };
   }, [active]);
 
@@ -98,18 +109,26 @@ export function XTimeline() {
 
 
       {failed && (
-        <p className="mt-3 text-base text-muted-foreground">
-          Live posts could not load here — open{" "}
-          <a
-            href={`https://x.com/${active}`}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-primary underline"
-          >
-            @{active} on X
-          </a>{" "}
-          instead. Some browsers and ad blockers block the X feed.
-        </p>
+        <div className="mt-3">
+          <p className="text-base text-muted-foreground">
+            X is rate-limiting the embedded feed right now. Open the live feeds directly:
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ACCOUNTS.map((a) => (
+              <a
+                key={a.handle}
+                href={`https://x.com/${a.handle}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className={`pixel-text border px-3 py-2 text-[7px] transition hover:border-primary hover:text-primary ${
+                  a.handle === active ? "border-primary text-primary" : "border-border text-muted-foreground"
+                }`}
+              >
+                @{a.handle.toUpperCase()}
+              </a>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
