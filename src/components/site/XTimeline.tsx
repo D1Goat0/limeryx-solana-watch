@@ -66,11 +66,13 @@ export function XTimeline() {
         ),
       )
       .then((el) => {
+        settled = true;
         if (cancelled) return;
         setLoading(false);
         if (!el) setFailed(true);
       })
       .catch(() => {
+        settled = true;
         if (cancelled) return;
         setLoading(false);
         setFailed(true);
