@@ -93,6 +93,10 @@ export function XTimeline() {
 
       <div ref={box} className="mt-4 min-h-[200px]" />
 
+      {loading && <p className="mt-3 text-base text-muted-foreground">Loading live posts from X…</p>}
+
+
+
       {failed && (
         <p className="mt-3 text-base text-muted-foreground">
           Live posts could not load here — open{" "}
