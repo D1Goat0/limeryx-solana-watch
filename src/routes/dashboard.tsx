@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { getNetworkStats, getTopTraders, getWallet } from "@/lib/solana.functions";
 import { integrations } from "@/lib/integrations";
 import { useAccount } from "@/lib/wallet-store";
+import { XTimeline } from "@/components/site/XTimeline";
+
 
 
 export const Route = createFileRoute("/dashboard")({
@@ -28,13 +30,8 @@ export const Route = createFileRoute("/dashboard")({
 
 const DEFAULT_WALLET = "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9";
 
-const xFeed = [
-  { handle: "@solanafloor", list: "SOL CORE", text: "Network TPS holding above baseline through the session." },
-  { handle: "@aeyakovenko", list: "SOL CORE", text: "Client diversity update shipping to mainnet validators." },
-  { handle: "@JupiterExchange", list: "DEX FLOW", text: "Routing volume climbing on perps and spot pairs." },
-  { handle: "@0xMert_", list: "SMART MONEY", text: "Watching fee payers rotate between two new mints." },
-  { handle: "@blknoiz06", list: "SMART MONEY", text: "Size showing up on-chain before the timeline notices." },
-];
+
+
 
 function short(a: string) {
   return `${a.slice(0, 4)}…${a.slice(-4)}`;
@@ -276,17 +273,10 @@ function Dashboard() {
         </div>
 
         {/* X LISTS */}
-        <Card title="X LISTS" right={<LiveTag />}>
-          <ul className="space-y-4">
-            {xFeed.map((p) => (
-              <li key={p.handle} className="border-l-2 border-primary pl-3">
-                <p className="pixel-text text-[7px] text-primary">{p.list}</p>
-                <p className="mt-2 text-base text-foreground">{p.handle}</p>
-                <p className="text-base text-muted-foreground">{p.text}</p>
-              </li>
-            ))}
-          </ul>
+        <Card title="X LIVE FEED" right={<LiveTag />}>
+          <XTimeline />
         </Card>
+
       </div>
 
       {/* TOP TRADERS */}
