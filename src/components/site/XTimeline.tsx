@@ -39,6 +39,7 @@ function loadWidgets(): Promise<Twttr> {
 export function XTimeline() {
   const [active, setActive] = useState(ACCOUNTS[0]!.handle);
   const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export function XTimeline() {
     if (!target) return;
     target.innerHTML = "";
     setFailed(false);
+    setLoading(true);
     loadWidgets()
       .then((twttr) =>
         twttr.widgets.createTimeline(
@@ -56,15 +58,20 @@ export function XTimeline() {
         ),
       )
       .then((el) => {
-        if (!cancelled && !el) setFailed(true);
+        if (cancelled) return;
+        setLoading(false);
+        if (!el) setFailed(true);
       })
       .catch(() => {
-        if (!cancelled) setFailed(true);
+        if (cancelled) return;
+        setLoading(false);
+        setFailed(true);
       });
     return () => {
       cancelled = true;
     };
   }, [active]);
+
 
   return (
     <div>
