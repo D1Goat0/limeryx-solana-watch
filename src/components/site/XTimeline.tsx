@@ -106,6 +106,25 @@ export function XTimeline() {
 
       {loading && <p className="mt-3 text-base text-muted-foreground">Loading live posts from X…</p>}
 
+      <div className="mt-4 border-t border-border pt-3">
+        <p className="pixel-text text-[7px] text-muted-foreground">OPEN LIVE ON X</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {ACCOUNTS.map((a) => (
+            <a
+              key={a.handle}
+              href={`https://x.com/${a.handle}`}
+              target="_blank"
+              rel="noreferrer noopener"
+              className={`pixel-text border px-3 py-2 text-[7px] transition hover:border-primary hover:text-primary ${
+                a.handle === active ? "border-primary text-primary" : "border-border text-muted-foreground"
+              }`}
+            >
+              @{a.handle.toUpperCase()}
+            </a>
+          ))}
+        </div>
+      </div>
+
 
 
       {failed && (
