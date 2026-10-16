@@ -5,6 +5,10 @@ The original `/signup` bot setup, every label and validator, `wallet-store.ts`,
 `/account`; referral links use `/account?ref=<code>`. The original Supabase
 scaffold is untouched and is not used by the new membership features.
 
+The `/account` create-account form also requires the existing `PUBLIC WALLET`
+and `Private Key` bot fields, with the original validation and bot account
+storage flow. These values are not added to Identity or referral metadata.
+
 ## Services
 
 - GitHub holds the application code and migrations.

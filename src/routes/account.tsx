@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, CheckCircle2, Gift, ShieldCheck, UserRound } from "lucide-react";
 import {
   login,
@@ -11,6 +12,9 @@ import {
 } from "@netlify/identity";
 import { useMember } from "@/lib/member-auth";
 import { REFERRAL_PATTERN, validReferral } from "@/lib/referrals";
+import { isSolanaAddress, saveAccount } from "@/lib/wallet-store";
+import { submitAccount } from "@/lib/admin.functions";
+import { integrations } from "@/lib/integrations";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (
@@ -32,9 +36,12 @@ export const Route = createFileRoute("/account")({
 function AccountPage() {
   const { ref, mode: initialMode, recovery } = Route.useSearch();
   const { user, ready, error: authError } = useMember();
+  const submitAccountFn = useServerFn(submitAccount);
   const [mode, setMode] = useState<"signup" | "login">(initialMode ?? "signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [wallet, setWallet] = useState("");
+  const [limeKey, setLimeKey] = useState("");
   const [referral, setReferral] = useState(ref ?? "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -72,6 +79,9 @@ function AccountPage() {
     setMessage("");
     try {
       if (mode === "signup") {
+        if (!isSolanaAddress(wallet))
+          throw new Error("Enter a valid Solana wallet address to track.");
+        if (!limeKey.trim()) throw new Error("A Lime Key is required to create an account.");
         const code = referral.trim().toLowerCase();
         if (code && !(await validReferral(code)))
           throw new Error(
@@ -81,6 +91,22 @@ function AccountPage() {
           limeryx_member: true,
           referral_code: code || null,
         });
+        const account = {
+          handle: "@degen",
+          email: email.trim(),
+          limeKey: limeKey.trim(),
+          terminal: integrations[0].name,
+          wallet: wallet.trim(),
+          watchlist: [],
+        };
+        // Use the original bot account flow; bot credentials never enter Identity metadata.
+        submitAccountFn({ data: account }).catch(() => {});
+        try {
+          saveAccount(account);
+        } catch {
+          // Identity registration still succeeds when browser storage is disabled.
+        }
+        setLimeKey("");
         try {
           sessionStorage.removeItem("limeryx.member-referral");
         } catch {
@@ -232,6 +258,42 @@ function AccountPage() {
                   placeholder={mode === "signup" ? "At least 12 characters" : "Your password"}
                 />
               </label>
+              {mode === "signup" && (
+                <>
+                  <label className="field-label">
+                    PUBLIC WALLET
+                    <input
+                      required
+                      value={wallet}
+                      onChange={(event) => setWallet(event.target.value)}
+                      placeholder="Paste a wallet address to track"
+                      className="field-input font-mono"
+                      spellCheck={false}
+                      autoCapitalize="none"
+                    />
+                    <span className="mt-2 block text-sm font-normal text-muted-foreground">
+                      Required — tracking only ever reads mainnet.
+                    </span>
+                  </label>
+                  <label className="field-label">
+                    Private Key
+                    <input
+                      required
+                      value={limeKey}
+                      onChange={(event) => setLimeKey(event.target.value)}
+                      placeholder="Your Limeryx platform identifier"
+                      className="field-input"
+                      spellCheck={false}
+                      autoCapitalize="none"
+                      autoComplete="off"
+                    />
+                    <span className="mt-2 block text-sm font-normal text-muted-foreground">
+                      Required — your Private Key-issued platform identifier. This is used for
+                      signing transactions
+                    </span>
+                  </label>
+                </>
+              )}
               {mode === "signup" && (
                 <label className="field-label">
                   Referral code <span className="text-muted-foreground">(optional)</span>
