@@ -15,8 +15,11 @@ registration. The returned receipt is validated against the signup email and
 linked to the Identity user by the server event handler. Bot credentials stay
 in the existing private `limeryx-accounts` store. A separate
 `limeryx-member-profiles` store links Identity IDs to those records. On sign-in,
-the authenticated profile endpoint restores the member's bot account before
-opening the dashboard, including on another device. Verified older members
+the authenticated profile endpoint restores the member's bot account on the
+dashboard, including on another device. Successful sign-in and account creation
+navigate directly to `/dashboard`, independently of profile loading. Registrations
+awaiting email confirmation show a dashboard notice; verified account and referral
+access still requires confirmation. Verified older members
 can recover existing legacy records matching their email; unlinked new signup
 drafts are excluded from that migration. Signing out clears the restored account.
 

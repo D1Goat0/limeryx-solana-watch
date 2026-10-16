@@ -10,6 +10,9 @@ import { useMember } from "@/lib/member-auth";
 import { logout } from "@netlify/identity";
 
 export const Route = createFileRoute("/dashboard")({
+  validateSearch: (search: Record<string, unknown>): { confirmation?: "1" } => ({
+    confirmation: search.confirmation === "1" ? "1" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Dashboard — Limeryx Live Solana Feed" },
@@ -91,6 +94,7 @@ function ConnectGate() {
 }
 
 function Dashboard() {
+  const { confirmation } = Route.useSearch();
   const { account: cachedAccount, ready, addWatch, removeWatch, signOut } = useAccount();
   const { user, ready: authReady, profileReady, linkedAccount } = useMember();
   const account =
@@ -142,6 +146,15 @@ function Dashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
+      {confirmation && !user && (
+        <p
+          role="status"
+          className="mb-6 border border-primary/30 bg-primary/5 p-4 text-base text-primary"
+        >
+          Your account was created. Check your email to confirm it, then sign in to access your
+          account and referrals.
+        </p>
+      )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="pixel-text text-[9px] text-primary">DASHBOARD</p>

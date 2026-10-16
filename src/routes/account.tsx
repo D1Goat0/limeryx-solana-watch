@@ -11,7 +11,7 @@ import {
 } from "@netlify/identity";
 import { useMember } from "@/lib/member-auth";
 import { REFERRAL_PATTERN, validReferral } from "@/lib/referrals";
-import { isSolanaAddress, saveAccount, useAccount } from "@/lib/wallet-store";
+import { isSolanaAddress, saveAccount } from "@/lib/wallet-store";
 import { integrations } from "@/lib/integrations";
 import { sessionRequest } from "@/lib/member-session";
 
@@ -34,9 +34,7 @@ export const Route = createFileRoute("/account")({
 
 export function AccountPage() {
   const { ref, mode: initialMode, recovery } = Route.useSearch();
-  const { user, ready, profileReady, profileError, linkedAccount, error: authError } = useMember();
-  const { account: cachedAccount } = useAccount();
-  const account = cachedAccount || linkedAccount;
+  const { user, ready, profileReady, profileError, error: authError } = useMember();
   const navigate = useNavigate();
   const prepared = useRef<{ value: string; id: string } | null>(null);
   const [mode, setMode] = useState<"signup" | "login">(initialMode ?? "signup");
@@ -49,15 +47,8 @@ export function AccountPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
-    if (
-      user &&
-      profileReady &&
-      account &&
-      !recovery &&
-      account.email.toLowerCase() === user.email?.toLowerCase()
-    )
-      void navigate({ to: "/dashboard", replace: true });
-  }, [user?.id, user?.email, profileReady, account, recovery, navigate]);
+    if (user && !recovery) void navigate({ to: "/dashboard", replace: true });
+  }, [user?.id, recovery, navigate]);
   useEffect(() => {
     if (initialMode === "login") setMode("login");
   }, [initialMode]);
@@ -130,13 +121,15 @@ export function AccountPage() {
           /* Storage may be disabled. */
         }
         if (!createdUser.confirmedAt) {
-          setMode("login");
-          setMessage(
-            "Check your email to confirm your account, then sign in. If you already have an account, use Sign in.",
-          );
+          await navigate({ to: "/dashboard", search: { confirmation: "1" }, replace: true });
+        } else {
+          // Confirmed signup responses do not always include a usable browser session.
+          await login(email.trim(), password);
+          await navigate({ to: "/dashboard", replace: true });
         }
       } else {
         await login(email.trim(), password);
+        await navigate({ to: "/dashboard", replace: true });
       }
       setPassword("");
     } catch (cause) {

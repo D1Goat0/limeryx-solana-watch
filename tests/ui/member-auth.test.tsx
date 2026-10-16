@@ -226,5 +226,11 @@ it("requires bot fields and waits for server storage before creating Identity ac
     bot_setup_id: "33333333-3333-4333-8333-333333333333",
   });
   expect(JSON.stringify(mocks.signup.mock.calls[0][2])).not.toContain(bot.limeKey);
-  await screen.findByText(/Check your email to confirm/);
+  await waitFor(() =>
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: "/dashboard",
+      search: { confirmation: "1" },
+      replace: true,
+    }),
+  );
 });
