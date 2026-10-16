@@ -4,6 +4,7 @@ import { MemberError, type MembershipServices } from "./membership-handler.serve
 import type { MemberUser } from "./member-api.ts";
 import { createBlobMembershipStorage } from "./membership-blobs.server.ts";
 import { postgresMembershipStorage } from "./membership-postgres.server.ts";
+import { isOfficialReferral } from "./referral-codes.ts";
 
 const blobs = createBlobMembershipStorage();
 // Accounts/referrals work on the existing plan. Money requires transactional storage.
@@ -11,9 +12,15 @@ function storage() {
   return process.env.LIMERYX_DATABASE_URL ? postgresMembershipStorage : blobs;
 }
 export async function validCode(code: string) {
-  return storage().validCode(code);
+  return isOfficialReferral(code) || storage().validCode(code);
 }
 export async function syncMember(id: string, code: string | null, confirmed: boolean) {
+  if (process.env.LIMERYX_DATABASE_URL && isOfficialReferral(code)) {
+    // Official campaigns are tracked in Blobs and never credited to a personal inviter.
+    await blobs.syncMember(id, code, confirmed);
+    await postgresMembershipStorage.syncMember(id, null, confirmed);
+    return;
+  }
   await storage().syncMember(id, code, confirmed);
 }
 async function canonicalUser(): Promise<User | null> {

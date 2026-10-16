@@ -1,11 +1,12 @@
 import type { UserSignupEvent, UserValidateEvent } from "@netlify/functions";
-import { syncMember, validCode } from "../../src/lib/membership-store.server";
+import { syncMember, validCode } from "../../src/lib/membership-store.server.ts";
+import { REFERRAL_PATTERN } from "../../src/lib/referral-codes.ts";
 
 function referralFrom(value: unknown): string | null {
   if (value == null || value === "") return null;
-  if (typeof value !== "string" || !/^[a-f0-9]{16}$/.test(value.toLowerCase()))
+  if (typeof value !== "string" || !REFERRAL_PATTERN.test(value.trim().toLowerCase()))
     throw new Error("Invalid referral code");
-  return value.toLowerCase();
+  return value.trim().toLowerCase();
 }
 
 export default {

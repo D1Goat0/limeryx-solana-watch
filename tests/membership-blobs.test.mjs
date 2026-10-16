@@ -31,6 +31,39 @@ function fixture() {
   return { records, store, service: createBlobMembershipStorage(() => store) };
 }
 
+test("Official campaign signup is active without an inviter and immutable on retries", async () => {
+  const { service, records } = fixture();
+  assert.equal(await service.validCode("dtofficial"), true);
+  assert.equal(await service.validCode("DTOFFICIAL"), true);
+  assert.equal(await service.validCode("dtofficial-fake"), false);
+  await service.syncMember(invitee, "DTOFFICIAL", false);
+  assert.equal(records.get(`members/${invitee}`).campaign_code, "dtofficial");
+  assert.equal(records.get(`members/${invitee}`).inviter_id, null);
+  assert.deepEqual(records.get(`campaigns/dtofficial/${invitee}`), { id: invitee });
+  await service.syncMember(inviter, null, true);
+  const code = (await service.dashboard(inviter)).code;
+  await service.syncMember(invitee, code, true);
+  assert.equal(records.get(`members/${invitee}`).campaign_code, "dtofficial");
+  assert.equal(records.get(`members/${invitee}`).inviter_id, null);
+  assert.ok(records.has(`verified/${invitee}`));
+  assert.equal((await service.dashboard(inviter)).summary.invited_count, 0);
+  assert.equal((await service.dashboard(invitee)).program.enabled, false);
+  await service.syncMember(inviter, "dtofficial", true);
+  assert.equal(records.get(`members/${inviter}`).campaign_code, null);
+  assert.equal(records.has(`campaigns/dtofficial/${inviter}`), false);
+});
+
+test("Interrupted official campaign indexing repairs without losing attribution", async () => {
+  const { service, store, records } = fixture();
+  store.failPrefix = "campaigns/";
+  await assert.rejects(service.syncMember(invitee, "dtofficial", false), /Interrupted/);
+  store.failPrefix = null;
+  await service.syncMember(invitee, null, true);
+  assert.equal(records.get(`members/${invitee}`).campaign_code, "dtofficial");
+  assert.ok(records.has(`campaigns/dtofficial/${invitee}`));
+  assert.ok(records.has(`verified/${invitee}`));
+});
+
 test("Blobs tracks immutable referrals and confirmations without financial balances", async () => {
   const { service, records } = fixture();
   await service.syncMember(inviter, null, true);

@@ -49,6 +49,15 @@ existing bot signup.
 
 ## Referral attribution
 
+`dtofficial` is an active official signup campaign. Share
+`https://limryx.netlify.app/account?ref=dtofficial` or enter the code on Create
+Account. Capitalization is normalized. It is not a personal referral and does
+not credit a personal inviter or award SOL. Initial campaign attribution is
+saved immutably in member profiles and indexed under
+`campaigns/dtofficial/<member-id>` in `limeryx-members-v1`. Email confirmation
+continues to use the existing `verified/<member-id>` records. Existing members
+cannot change their initial attribution by entering the campaign code later.
+
 Identity signup events persist the initial inviter and stamp a server-owned
 `limeryx_referral_code` in app metadata. Client changes to user metadata cannot
 rewrite an existing referral. Authenticated server operations re-read the

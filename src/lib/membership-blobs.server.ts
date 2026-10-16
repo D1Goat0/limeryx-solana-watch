@@ -3,8 +3,15 @@ import { getStore } from "@netlify/blobs";
 import { z } from "zod";
 import type { ReferralDashboard } from "./member-api.ts";
 import { MemberError } from "./membership-handler.server.ts";
+import { isOfficialReferral, OFFICIAL_REFERRAL_CODE } from "./referral-codes.ts";
 
-type Profile = { id: string; code: string; inviter_id: string | null; created_at: string };
+type Profile = {
+  id: string;
+  code: string;
+  inviter_id: string | null;
+  campaign_code?: typeof OFFICIAL_REFERRAL_CODE | null;
+  created_at: string;
+};
 type BlobStore = Pick<ReturnType<typeof getStore>, "get" | "setJSON" | "list">;
 const uuid = z.string().uuid();
 const codePattern = /^[a-f0-9]{16}$/;
@@ -27,8 +34,9 @@ export function createBlobMembershipStorage(
     if (!uuid.safeParse(id).success) throw new MemberError("Invalid member account.");
     let member = await profile(id);
     if (!member) {
-      const inviter = referral ? await memberForCode(referral.toLowerCase()) : null;
-      if (referral && (!inviter || inviter.id === id))
+      const official = isOfficialReferral(referral);
+      const inviter = referral && !official ? await memberForCode(referral.toLowerCase()) : null;
+      if (referral && !official && (!inviter || inviter.id === id))
         throw new MemberError("Invalid referral code.");
       const code = createHash("sha256").update(`limeryx:${id}`).digest("hex").slice(0, 16);
       const index = await storeFactory().setJSON(`codes/${code}`, { id }, { onlyIfNew: true });
@@ -40,6 +48,7 @@ export function createBlobMembershipStorage(
           id,
           code,
           inviter_id: inviter?.id ?? null,
+          campaign_code: official ? OFFICIAL_REFERRAL_CODE : null,
           created_at: new Date().toISOString(),
         } satisfies Profile,
         { onlyIfNew: true },
@@ -48,6 +57,12 @@ export function createBlobMembershipStorage(
       member = await profile(id);
       if (!member) throw new MemberError("Member account is not ready.", 503);
     }
+    if (member.campaign_code === OFFICIAL_REFERRAL_CODE)
+      await storeFactory().setJSON(
+        `campaigns/${OFFICIAL_REFERRAL_CODE}/${id}`,
+        { id },
+        { onlyIfNew: true },
+      );
     if (member.inviter_id)
       await storeFactory().setJSON(
         `referrals/${member.inviter_id}/${id}`,
@@ -62,7 +77,8 @@ export function createBlobMembershipStorage(
       );
   }
   return {
-    validCode: async (code: string) => Boolean(await memberForCode(code)),
+    validCode: async (code: string) =>
+      isOfficialReferral(code) || Boolean(await memberForCode(code.toLowerCase())),
     syncMember,
     async dashboard(id: string): Promise<ReferralDashboard> {
       if (!uuid.safeParse(id).success) throw new MemberError("Invalid member account.");

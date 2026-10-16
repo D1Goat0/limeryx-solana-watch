@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { MemberUser, ReferralDashboard } from "./member-api.ts";
+import { REFERRAL_PATTERN } from "./referral-codes.ts";
 
 export class MemberError extends Error {
   status: number;
@@ -41,8 +42,8 @@ export function createMembershipHandler(services: MembershipServices) {
       const url = new URL(request.url);
       const action = url.searchParams.get("action");
       if (request.method === "GET" && action === "valid") {
-        const code = url.searchParams.get("code") ?? "";
-        return json({ valid: /^[a-f0-9]{16}$/.test(code) && (await services.validCode(code)) });
+        const code = (url.searchParams.get("code") ?? "").trim().toLowerCase();
+        return json({ valid: REFERRAL_PATTERN.test(code) && (await services.validCode(code)) });
       }
       if (
         !(request.method === "GET" && action === "dashboard") &&

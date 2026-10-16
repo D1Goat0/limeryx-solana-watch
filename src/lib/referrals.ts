@@ -1,6 +1,7 @@
 import { memberRequest, type ReferralDashboard } from "./member-api";
+import { REFERRAL_PATTERN } from "./referral-codes.ts";
 
-export const REFERRAL_PATTERN = /^[a-f0-9]{16}$/;
+export { REFERRAL_PATTERN };
 export function sol(lamports: number | string) {
   const amount = BigInt(lamports);
   const whole = amount / 1_000_000_000n;
@@ -9,6 +10,7 @@ export function sol(lamports: number | string) {
 }
 
 export async function validReferral(code: string) {
+  code = code.trim().toLowerCase();
   if (!REFERRAL_PATTERN.test(code)) return false;
   const data = await memberRequest<{ valid: boolean }>("valid", undefined, { code });
   return data.valid;
