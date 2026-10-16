@@ -42,8 +42,9 @@ export const listAccounts = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => adminAuthSchema.parse(d))
   .handler(async ({ data }) => {
     if (!isValidAdmin(data.user, data.pass)) throw new Error("Invalid admin credentials.");
-    const store = getStore(STORE_NAME);
-    const { blobs } = await store.list();
+    const store = getStore(STORE_NAME, { consistency: "strong" });
+    const blobs: { key: string }[] = [];
+    for await (const page of store.list({ paginate: true })) blobs.push(...page.blobs);
     const records = await Promise.all(
       blobs.map((b) => store.get(b.key, { type: "json" }) as Promise<StoredAccount | null>),
     );

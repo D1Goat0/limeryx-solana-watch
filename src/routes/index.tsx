@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { getNetworkStats } from "@/lib/solana.functions";
 import { integrations } from "@/lib/integrations";
+import { useMember } from "@/lib/member-auth";
+import { useAccount } from "@/lib/wallet-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,6 +36,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { user } = useMember();
+  const { account } = useAccount();
+  const hasAccount = Boolean(user || account);
   const stats = useServerFn(getNetworkStats);
   const { data, isError } = useQuery({
     queryKey: ["network-stats"],
@@ -60,8 +65,9 @@ function Home() {
             Wallets on-chain. Conversations on X. Your next move starts with seeing them together.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/account" className="action-primary">
-              Create account <ArrowRight aria-hidden size={16} />
+            <Link to={hasAccount ? "/dashboard" : "/account"} className="action-primary">
+              {hasAccount ? "Open dashboard" : "Create account"}{" "}
+              <ArrowRight aria-hidden size={16} />
             </Link>
             <Link to="/dashboard" className="action-secondary">
               Open dashboard <ArrowUpRight aria-hidden size={16} />
@@ -268,7 +274,7 @@ function Home() {
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link to="/account" className="action-primary">
-            Create account <ArrowRight aria-hidden size={16} />
+            {hasAccount ? "Your account" : "Create account"} <ArrowRight aria-hidden size={16} />
           </Link>
           <Link to="/signup" className="action-secondary">
             Bot setup

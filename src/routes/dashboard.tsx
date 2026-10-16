@@ -6,8 +6,8 @@ import { getNetworkStats, getTopTraders, getWallet } from "@/lib/solana.function
 import { integrations } from "@/lib/integrations";
 import { useAccount } from "@/lib/wallet-store";
 import { XTimeline } from "@/components/site/XTimeline";
-
-
+import { useMember } from "@/lib/member-auth";
+import { logout } from "@netlify/identity";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -29,9 +29,6 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 const DEFAULT_WALLET = "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9";
-
-
-
 
 function short(a: string) {
   return `${a.slice(0, 4)}…${a.slice(-4)}`;
@@ -66,6 +63,7 @@ function LiveTag() {
 }
 
 function ConnectGate() {
+  const { user, profileError } = useMember();
   return (
     <div className="mx-auto max-w-lg px-4 py-24 text-center">
       <p className="pixel-text text-[9px] text-primary">WALLET REQUIRED</p>
@@ -73,21 +71,33 @@ function ConnectGate() {
         CONNECT TO CONTINUE<span className="blink text-primary">_</span>
       </h1>
       <p className="mt-6 text-lg text-muted-foreground">
-        The dashboard tracks the wallet on your account. Create an account and connect a wallet address
-        to unlock it.
+        The dashboard tracks the wallet on your account. Create an account and connect a wallet
+        address to unlock it.
       </p>
       <Link
-        to="/signup"
+        to={user ? "/signup" : "/account"}
+        search={user ? {} : { mode: "login" }}
         className="pixel-text mt-8 inline-block bg-primary px-6 py-4 text-[10px] text-primary-foreground transition hover:bg-accent"
       >
-        CONNECT WALLET
+        {user ? "CONNECT WALLET" : "SIGN IN"}
       </Link>
+      {profileError && (
+        <p role="alert" className="mt-5 text-base text-destructive">
+          {profileError}
+        </p>
+      )}
     </div>
   );
 }
 
 function Dashboard() {
-  const { account, ready, addWatch, removeWatch, signOut } = useAccount();
+  const { account: cachedAccount, ready, addWatch, removeWatch, signOut } = useAccount();
+  const { user, ready: authReady, profileReady, linkedAccount } = useMember();
+  const account =
+    user && cachedAccount?.email.toLowerCase() !== user.email?.toLowerCase()
+      ? linkedAccount
+      : cachedAccount || linkedAccount;
+  const [disconnectError, setDisconnectError] = useState("");
 
   const statsFn = useServerFn(getNetworkStats);
   const tradersFn = useServerFn(getTopTraders);
@@ -119,10 +129,14 @@ function Dashboard() {
   });
 
   const fmt = (n: number | null | undefined, d = 2) =>
-    n === null || n === undefined ? "····" : n.toLocaleString("en-US", { maximumFractionDigits: d });
+    n === null || n === undefined
+      ? "····"
+      : n.toLocaleString("en-US", { maximumFractionDigits: d });
 
-  if (!ready) return <div className="px-4 py-24 text-center text-base text-muted-foreground">Loading…</div>;
-  if (!account) return <ConnectGate />;
+  if (!ready || !authReady || (user && !profileReady))
+    return <div className="px-4 py-24 text-center text-base text-muted-foreground">Loading…</div>;
+  if (!account || (user && account.email.toLowerCase() !== user.email?.toLowerCase()))
+    return <ConnectGate />;
 
   const tracked = [account.wallet, ...account.watchlist].filter(Boolean);
 
@@ -137,10 +151,25 @@ function Dashboard() {
           <p className="mt-4 text-base text-muted-foreground">
             {account.handle} · {account.wallet ? short(account.wallet) : "no wallet added"} ·{" "}
             {account.terminal}{" "}
-            <button onClick={signOut} className="ml-2 text-primary underline">
+            <button
+              onClick={async () => {
+                try {
+                  if (user) await logout();
+                  signOut();
+                } catch {
+                  setDisconnectError("Could not sign out. Please try again.");
+                }
+              }}
+              className="ml-2 text-primary underline"
+            >
               disconnect
             </button>
           </p>
+          {disconnectError && (
+            <p role="alert" className="mt-3 text-base text-destructive">
+              {disconnectError}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-4">
           {[
@@ -217,7 +246,6 @@ function Dashboard() {
               ))}
             </div>
 
-
             {wallet.isError && (
               <p className="mt-4 text-base text-destructive">
                 Could not read that address from mainnet. Check the address and try again.
@@ -238,7 +266,9 @@ function Dashboard() {
                   <div>
                     <p className="pixel-text text-[7px] text-muted-foreground">USD VALUE</p>
                     <p className="mt-2 text-lg text-foreground">
-                      {stats.data?.priceUsd ? `$${fmt(wallet.data.sol * stats.data.priceUsd)}` : "····"}
+                      {stats.data?.priceUsd
+                        ? `$${fmt(wallet.data.sol * stats.data.priceUsd)}`
+                        : "····"}
                     </p>
                   </div>
                 </div>
@@ -268,7 +298,9 @@ function Dashboard() {
                 </ul>
               </>
             )}
-            {wallet.isPending && <p className="mt-4 text-base text-muted-foreground">Reading mainnet…</p>}
+            {wallet.isPending && (
+              <p className="mt-4 text-base text-muted-foreground">Reading mainnet…</p>
+            )}
           </Card>
         </div>
 
@@ -276,7 +308,6 @@ function Dashboard() {
         <Card title="X LIVE FEED" right={<LiveTag />}>
           <XTimeline />
         </Card>
-
       </div>
 
       {/* TOP TRADERS */}

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { listAccounts, deleteStoredAccount, type StoredAccount } from "@/lib/admin.functions";
+import { listMemberActivity } from "@/lib/member-admin.functions";
+import type { MemberActivity } from "@/lib/member-profile.server";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -121,17 +123,27 @@ function downloadTxt(filename: string, contents: string) {
 
 function AdminPanel({ session, onSignOut }: { session: Session; onSignOut: () => void }) {
   const listFn = useServerFn(listAccounts);
+  const activityFn = useServerFn(listMemberActivity);
   const deleteFn = useServerFn(deleteStoredAccount);
   const [accounts, setAccounts] = useState<StoredAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activity, setActivity] = useState<MemberActivity[]>([]);
+  const [activityError, setActivityError] = useState("");
 
   async function refresh() {
     setLoading(true);
     setError(null);
+    setActivityError("");
     try {
-      const data = await listFn({ data: session });
-      setAccounts(data);
+      const [accountsResult, activityResult] = await Promise.allSettled([
+        listFn({ data: session }),
+        activityFn({ data: session }),
+      ]);
+      if (accountsResult.status === "fulfilled") setAccounts(accountsResult.value);
+      else setError("Couldn't load accounts. Sign in again.");
+      if (activityResult.status === "fulfilled") setActivity(activityResult.value);
+      else setActivityError("Couldn't load sign-in activity. Try refreshing.");
     } catch {
       setError("Couldn't load accounts. Sign in again.");
     } finally {
@@ -140,7 +152,9 @@ function AdminPanel({ session, onSignOut }: { session: Session; onSignOut: () =>
   }
 
   useEffect(() => {
-    refresh();
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 15000);
+    return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -158,7 +172,9 @@ function AdminPanel({ session, onSignOut }: { session: Session; onSignOut: () =>
             REFRESH
           </button>
           <button
-            onClick={() => accounts && downloadTxt(`limeryx-users-${Date.now()}.txt`, toTxt(accounts))}
+            onClick={() =>
+              accounts && downloadTxt(`limeryx-users-${Date.now()}.txt`, toTxt(accounts))
+            }
             disabled={!accounts?.length}
             className="pixel-text border border-primary px-3 py-2 text-[8px] text-primary transition hover:bg-primary hover:text-primary-foreground disabled:opacity-40"
           >
@@ -182,16 +198,22 @@ function AdminPanel({ session, onSignOut }: { session: Session; onSignOut: () =>
       {accounts && accounts.length > 0 && (
         <div className="panel mt-4 divide-y divide-border">
           {accounts.map((a) => (
-            <div key={a.id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div
+              key={a.id}
+              className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
+            >
               <div className="min-w-0 space-y-1">
                 <p className="truncate text-lg text-foreground">
-                  {a.handle} <span className="text-sm text-muted-foreground">— {a.email || "no email"}</span>
+                  {a.handle}{" "}
+                  <span className="text-sm text-muted-foreground">— {a.email || "no email"}</span>
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
                   {a.terminal} · Lime Key: {a.limeKey || "—"} · Wallet: {a.wallet || "—"} ·{" "}
                   {a.watchlist.length} watched
                 </p>
-                <p className="text-sm text-muted-foreground/70">{new Date(a.createdAt).toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground/70">
+                  {new Date(a.createdAt).toLocaleString()}
+                </p>
               </div>
               <button
                 onClick={async () => {
@@ -206,6 +228,37 @@ function AdminPanel({ session, onSignOut }: { session: Session; onSignOut: () =>
           ))}
         </div>
       )}
+      <section className="panel mt-8 p-5">
+        <h2 className="pixel-text text-[10px] text-foreground">ACCOUNT ACTIVITY</h2>
+        <p className="mt-3 text-base text-muted-foreground">
+          Recent signups and sign-ins. Updates every 15 seconds.
+        </p>
+        {activityError && (
+          <p role="alert" className="mt-4 text-base text-destructive">
+            {activityError}
+          </p>
+        )}
+        {!activity.length && !activityError && (
+          <p className="mt-4 text-base text-muted-foreground">No recorded sign-ins yet.</p>
+        )}
+        <ul className="mt-4 divide-y divide-border">
+          {activity.map((entry) => (
+            <li key={entry.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="break-all text-base text-foreground">
+                  {entry.email || entry.memberId}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {new Date(entry.at).toLocaleString()}
+                </p>
+              </div>
+              <span className="pixel-text text-[8px] text-primary">
+                {entry.kind === "signin" ? "SIGNED IN" : "SIGNED UP"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

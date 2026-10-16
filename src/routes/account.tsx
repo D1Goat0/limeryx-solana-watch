@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useRef, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2, Gift, ShieldCheck, UserRound } from "lucide-react";
 import {
   login,
@@ -12,9 +11,9 @@ import {
 } from "@netlify/identity";
 import { useMember } from "@/lib/member-auth";
 import { REFERRAL_PATTERN, validReferral } from "@/lib/referrals";
-import { isSolanaAddress, saveAccount } from "@/lib/wallet-store";
-import { submitAccount } from "@/lib/admin.functions";
+import { isSolanaAddress, saveAccount, useAccount } from "@/lib/wallet-store";
 import { integrations } from "@/lib/integrations";
+import { sessionRequest } from "@/lib/member-session";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (
@@ -33,10 +32,13 @@ export const Route = createFileRoute("/account")({
   component: AccountPage,
 });
 
-function AccountPage() {
+export function AccountPage() {
   const { ref, mode: initialMode, recovery } = Route.useSearch();
-  const { user, ready, error: authError } = useMember();
-  const submitAccountFn = useServerFn(submitAccount);
+  const { user, ready, profileReady, profileError, linkedAccount, error: authError } = useMember();
+  const { account: cachedAccount } = useAccount();
+  const account = cachedAccount || linkedAccount;
+  const navigate = useNavigate();
+  const prepared = useRef<{ value: string; id: string } | null>(null);
   const [mode, setMode] = useState<"signup" | "login">(initialMode ?? "signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,6 +48,16 @@ function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  useEffect(() => {
+    if (
+      user &&
+      profileReady &&
+      account &&
+      !recovery &&
+      account.email.toLowerCase() === user.email?.toLowerCase()
+    )
+      void navigate({ to: "/dashboard", replace: true });
+  }, [user?.id, user?.email, profileReady, account, recovery, navigate]);
   useEffect(() => {
     if (initialMode === "login") setMode("login");
   }, [initialMode]);
@@ -87,10 +99,6 @@ function AccountPage() {
           throw new Error(
             "That referral code was not found. Check it with the person who invited you.",
           );
-        const createdUser = await signup(email.trim(), password, {
-          limeryx_member: true,
-          referral_code: code || null,
-        });
         const account = {
           handle: "@degen",
           email: email.trim(),
@@ -99,8 +107,17 @@ function AccountPage() {
           wallet: wallet.trim(),
           watchlist: [],
         };
-        // Use the original bot account flow; bot credentials never enter Identity metadata.
-        submitAccountFn({ data: account }).catch(() => {});
+        const value = JSON.stringify(account);
+        if (prepared.current?.value !== value) {
+          const { id } = await sessionRequest<{ id: string }>("prepare", account);
+          prepared.current = { value, id };
+        }
+        // Persist setup before registration; only an opaque receipt enters Identity metadata.
+        const createdUser = await signup(email.trim(), password, {
+          limeryx_member: true,
+          referral_code: code || null,
+          bot_setup_id: prepared.current.id,
+        });
         try {
           saveAccount(account);
         } catch {
@@ -112,10 +129,12 @@ function AccountPage() {
         } catch {
           /* Storage may be disabled. */
         }
-        if (!createdUser.confirmedAt)
+        if (!createdUser.confirmedAt) {
+          setMode("login");
           setMessage(
             "Check your email to confirm your account, then sign in. If you already have an account, use Sign in.",
           );
+        }
       } else {
         await login(email.trim(), password);
       }
@@ -170,7 +189,7 @@ function AccountPage() {
         </div>
       </section>
       <section className="panel panel-glow p-6 sm:p-9">
-        {!ready ? (
+        {!ready || (user && !profileReady && !recovery) ? (
           <p role="status">Loading your account...</p>
         ) : user && recovery ? (
           <PasswordReset />
@@ -367,6 +386,11 @@ function AccountPage() {
             className="mt-5 border border-primary/30 bg-primary/5 p-4 text-base text-primary"
           >
             {message}
+          </p>
+        )}
+        {profileError && (
+          <p role="alert" className="mt-5 text-base text-destructive">
+            {profileError}
           </p>
         )}
       </section>

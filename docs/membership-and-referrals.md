@@ -1,13 +1,31 @@
 # Membership and referral rollout
 
-The original `/signup` bot setup, every label and validator, `wallet-store.ts`,
-`admin.functions.ts`, and `/admin` are unchanged. Accounts live separately at
+The original `/signup` bot setup, every label and validator, and `wallet-store.ts`
+are unchanged. The admin account list uses strong reads and now shows Identity
+signup/sign-in activity. Accounts live at
 `/account`; referral links use `/account?ref=<code>`. The original Supabase
 scaffold is untouched and is not used by the new membership features.
 
 The `/account` create-account form also requires the existing `PUBLIC WALLET`
 and `Private Key` bot fields, with the original validation and bot account
 storage flow. These values are not added to Identity or referral metadata.
+
+Bot setup is persisted through `member-session?action=prepare` before Identity
+registration. The returned receipt is validated against the signup email and
+linked to the Identity user by the server event handler. Bot credentials stay
+in the existing private `limeryx-accounts` store. A separate
+`limeryx-member-profiles` store links Identity IDs to those records. On sign-in,
+the authenticated profile endpoint restores the member's bot account before
+opening the dashboard, including on another device. Verified older members
+can recover existing legacy records matching their email; unlinked new signup
+drafts are excluded from that migration. Signing out clears the restored account.
+
+The `userLogin` Identity hook writes immutable sign-in events to
+`limeryx-member-activity`. Admin shows the latest 200 signup/sign-in events and
+refreshes every 15 seconds. Event retries with the same Identity sign-in
+timestamp are idempotent. History starts with this release; it cannot recreate
+sign-ins that were never recorded. Logs contain email, member ID and timestamps,
+not bot credentials or account passwords.
 
 ## Services
 
@@ -31,7 +49,8 @@ User data and credentials are not committed into this public repository.
    context automatically; no database is provisioned during builds. The new
    membership store is separate from the original bot signup store.
 4. Netlify discovers `netlify/functions/membership.ts` and `identity.mts`.
-   The Identity function subscribes to `identity_validate` and `identity_signup`.
+   The Identity function subscribes to `identity_validate`, `identity_signup`,
+   and `identity_login`.
    The membership function accepts only code validation, an authenticated
    dashboard read, and an authenticated claim request.
 5. Verify signup, email confirmation, sign-in, password recovery, referral

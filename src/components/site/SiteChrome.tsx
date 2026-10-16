@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { useMember } from "@/lib/member-auth";
+import { useAccount } from "@/lib/wallet-store";
 
 const links = [
   { to: "/", label: "HOME" },
@@ -14,6 +15,8 @@ const links = [
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const { user } = useMember();
+  const { account } = useAccount();
+  const hasAccount = Boolean(user || account);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-black/80 backdrop-blur-md">
       <div className="flex items-center justify-center gap-3 border-b border-primary/25 bg-primary/10 px-4 py-3 text-center">
@@ -40,16 +43,16 @@ export function SiteNav() {
           </div>
           <Link
             to="/account"
-            search={user ? {} : { mode: "login" }}
+            search={hasAccount ? {} : { mode: "login" }}
             className="pixel-text hidden text-[8px] text-muted-foreground transition hover:text-primary sm:block"
           >
-            {user ? "ACCOUNT" : "SIGN IN"}
+            {hasAccount ? "ACCOUNT" : "SIGN IN"}
           </Link>
           <Link
-            to="/signup"
+            to={hasAccount ? "/dashboard" : "/account"}
             className="pixel-text border border-primary bg-primary px-2 py-2 text-[8px] text-primary-foreground transition hover:bg-transparent hover:text-primary sm:px-3 sm:text-[9px]"
           >
-            SIGN UP
+            {hasAccount ? "DASHBOARD" : "SIGN UP"}
           </Link>
           <button
             type="button"
@@ -84,7 +87,7 @@ export function SiteNav() {
             onClick={() => setOpen(false)}
             className="pixel-text px-3 py-3 text-[9px] text-primary"
           >
-            {user ? "ACCOUNT" : "ACCOUNT / SIGN IN"}
+            {hasAccount ? "ACCOUNT" : "ACCOUNT / SIGN IN"}
           </Link>
         </nav>
       )}
