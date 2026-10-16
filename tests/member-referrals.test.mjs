@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 
-test("Netlify membership ledger", async (t) => {
+test("Optional PostgreSQL membership ledger", async (t) => {
   const db = new PGlite();
   const inviter = "11111111-1111-4111-8111-111111111111";
   const invitee = "22222222-2222-4222-8222-222222222222";
@@ -16,12 +16,7 @@ test("Netlify membership ledger", async (t) => {
   const claim = (id, address = wallet) =>
     query("select public.member_request_claim($1, $2) as id", [id, address]);
   try {
-    await db.exec(
-      await readFile(
-        new URL("../netlify/database/migrations/20261016023000_membership.sql", import.meta.url),
-        "utf8",
-      ),
-    );
+    await db.exec(await readFile(new URL("../docs/sql/membership.sql", import.meta.url), "utf8"));
     await sync(inviter);
     await sync(stranger);
     const code = (

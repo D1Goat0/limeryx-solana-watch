@@ -9,7 +9,8 @@ scaffold is untouched and is not used by the new membership features.
 
 - GitHub holds the application code and migrations.
 - Netlify Identity handles passwords, sessions, email confirmation and recovery.
-- Netlify Database holds the private member, referral and SOL reward ledger.
+- A separate Netlify Blobs store (`limeryx-members-v1`) holds immutable member and referral records.
+- SOL balances and claims need the optional PostgreSQL ledger described below.
 - The original bot setup continues using its existing Netlify Blobs store.
 
 User data and credentials are not committed into this public repository.
@@ -22,11 +23,9 @@ User data and credentials are not committed into this public repository.
    email/password registration and leave email confirmation enabled. Configure
    Site URL as `https://limryx.netlify.app`. Use production and deploy-preview
    redirect URLs deliberately when testing confirmation and recovery emails.
-3. `@netlify/database` and the migration in
-   `netlify/database/migrations/20261016023000_membership.sql` let Netlify provision
-   the database and apply its schema during deployment. This requires a supported
-   Netlify Credit-based plan. The database consumes normal Netlify usage credits;
-   check your plan and budget before enabling it.
+3. No Netlify Database feature or plan change is required. Blobs uses the site
+   context automatically; no database is provisioned during builds. The new
+   membership store is separate from the original bot signup store.
 4. Netlify discovers `netlify/functions/membership.ts` and `identity.mts`.
    The Identity function subscribes to `identity_validate` and `identity_signup`.
    The membership function accepts only code validation, an authenticated
@@ -35,13 +34,13 @@ User data and credentials are not committed into this public repository.
    attribution, and the unchanged bot signup on a deploy preview first.
 
 There are no new Supabase settings or separate database credentials to copy.
-Do not expose `NETLIFY_DB_URL`, Identity operator tokens or payout secrets through
+Do not expose `LIMERYX_DATABASE_URL`, Identity operator tokens or payout secrets through
 `VITE_*` variables. The browser talks to authenticated Functions, never directly
 to the database. Authenticated responses disable browser and CDN caching.
 
 Local testing uses `netlify dev` with the project linked to Netlify. Plain
 `npm run dev` serves the visual frontend but does not emulate Identity and
-database functions. The code handles unavailable services without affecting the
+Blobs functions. The code handles unavailable services without affecting the
 existing bot signup.
 
 ## Referral attribution
@@ -51,10 +50,39 @@ Identity signup events persist the initial inviter and stamp a server-owned
 rewrite an existing referral. Authenticated server operations re-read the
 canonical Identity account; a request cannot choose another member's ID.
 
-Confirmed referrals generate pending rewards once, using the policy active at
-the first confirmed sync. Existing Identity users receive a code when they first
+Blobs saves initial attribution and email confirmation as immutable records
+using create-only writes and strong reads. Referral counts include all pages.
+Blobs never holds money, counters or mutable balances. SOL totals are zero and
+claims are closed in this mode. Existing Identity users receive a code when they first
 open referrals. Their mutable metadata is not used to invent a past inviter.
 Identity events are idempotent, so retries do not duplicate rewards.
+
+## Optional transactional reward storage
+
+The default Blobs mode supports accounts, referral links and invite counts.
+Claims remain disabled. This avoids the `database feature not available for this
+account` build error without putting financial balances in object storage.
+
+To enable actual rewards later, an operator must:
+
+1. Supply a PostgreSQL database and apply `docs/sql/membership.sql` once using
+   that provider's SQL console. This SQL is outside Netlify's automatic migration
+   directory and is never applied by a normal site build.
+2. Migrate existing Blobs members into `member_accounts` preserving `user_id`,
+   `code`, `created_at` and email confirmation; then import their initial inviter
+   relationships into `member_referrals`. Keep the policy disabled throughout
+   import and preserve referral confirmation so past signups are not rewarded
+   again. Back up and verify the imported data before switching storage.
+3. Set the server-only `LIMERYX_DATABASE_URL` in Netlify's Functions environment,
+   using the provider's TLS connection string and pooled endpoint. Redeploy.
+   This explicitly switches the membership API to PostgreSQL. Do not set it
+   before the schema and existing data have been imported. Do not silently fall
+   back to Blobs if an existing PostgreSQL ledger becomes unavailable.
+4. Verify account/referral links on staging, then configure and fund rewards.
+   Use separate databases and Blobs stores for staging and production.
+
+No new Supabase service is required. Do not put database credentials into GitHub
+or any `VITE_*` variable.
 
 ## Reward rules and funding
 
@@ -62,8 +90,7 @@ The program starts **disabled**, with zero reward amounts and zero funded budget
 No amounts were supplied. Referrals are tracked while disabled and are not
 retroactively credited when the program opens. Set the rules before launch.
 
-Use the Netlify Database SQL console, or `netlify database connect`, for trusted
-operator actions. All values below are placeholders, in integer lamports
+After configuring PostgreSQL, use its trusted SQL console for operator actions. All values below are placeholders, in integer lamports
 (1 SOL = 1,000,000,000 lamports):
 
 ```sql
@@ -134,8 +161,9 @@ npm run build
 netlify functions:build --src netlify/functions --functions .netlify/membership-bundles
 ```
 
-The tests run the actual Netlify SQL migration in isolated PGlite PostgreSQL and
-exercise the server request handler with injected service boundaries. They cover
+The tests exercise immutable Blobs records (including races and interrupted
+writes), the optional SQL schema in isolated PGlite PostgreSQL, and the server
+request handler with injected service boundaries. They cover
 immutable attribution, one-time reward qualification, funded approvals, exact
 lamport aggregates, duplicate claims, claim rejection and payment, disabled
 programs, authentication, origin checks, identity/amount tampering, and cache
