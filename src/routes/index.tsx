@@ -1,179 +1,279 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import {
+  Activity,
+  ArrowRight,
+  ArrowUpRight,
+  Crosshair,
+  Gift,
+  Radio,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { getNetworkStats } from "@/lib/solana.functions";
 import { integrations } from "@/lib/integrations";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Limeryx — Track Solana Wallets & X Lists Live" },
+      { title: "Limeryx | Solana wallets. X signals. One screen." },
       {
         name: "description",
         content:
-          "Limeryx streams Solana wallet activity and X lists in real time, ranks daily top traders from on-chain data, and works with Axiom, Padre.gg, Photon and more.",
+          "Follow Solana wallets, watch X lists, and track on-chain activity in one trading workspace. Invite your circle with Limeryx referrals.",
       },
-      { property: "og:title", content: "Limeryx — Track Solana Wallets & X Lists Live" },
+      { property: "og:title", content: "Limeryx | Follow the flow." },
       {
         property: "og:description",
-        content: "Real-time Solana wallet tracking, live X lists, daily top traders.",
+        content: "Solana wallet tracking, X list feeds, and referral rewards in one workspace.",
       },
     ],
   }),
   component: Home,
 });
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="panel px-4 py-3">
-      <p className="pixel-text text-[8px] text-muted-foreground">{label}</p>
-      <p className="mt-2 font-[var(--font-pixel)] text-sm text-primary">{value}</p>
-    </div>
-  );
-}
-
 function Home() {
   const stats = useServerFn(getNetworkStats);
-  const { data } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ["network-stats"],
     queryFn: () => stats(),
     refetchInterval: 10_000,
   });
-
-  const fmt = (n: number | null | undefined, d = 2) =>
-    n === null || n === undefined ? "····" : n.toLocaleString("en-US", { maximumFractionDigits: d });
+  const fmt = (n: number | null | undefined, digits = 2) =>
+    n == null ? "--" : n.toLocaleString("en-US", { maximumFractionDigits: digits });
 
   return (
-    <div className="mx-auto max-w-6xl px-4">
-      {/* HERO */}
-      <section className="rise-in flex flex-col items-center py-20 text-center sm:py-28">
-        <span className="pixel-text flex items-center gap-2 border border-border bg-black/60 px-3 py-2 text-[8px] text-muted-foreground">
-          <span className="live-dot inline-block h-2 w-2 bg-primary" />
-          LIVE ON SOLANA MAINNET
-        </span>
-        <h1 className="mt-8 max-w-3xl text-2xl leading-relaxed text-foreground sm:text-4xl">
-          TRACK WALLETS <span className="text-primary">&</span> X LISTS
-          <br />
-          IN <span className="text-primary">REAL TIME</span>
-          <span className="blink text-primary">_</span>
-        </h1>
-        <p className="mt-8 max-w-2xl text-xl text-muted-foreground">
-          Limeryx watches Solana on-chain flow and your X lists on one screen. Every buy, every
-          call, every rotation — the second it happens.
-        </p>
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <Link
-            to="/get-started"
-            className="pixel-text panel-glow bg-primary px-6 py-4 text-[10px] text-primary-foreground transition hover:bg-accent"
-          >
-            GET STARTED
-          </Link>
-          <Link
-            to="/dashboard"
-            className="pixel-text border border-border px-6 py-4 text-[10px] text-foreground transition hover:border-primary hover:text-primary"
-          >
-            VIEW LIVE DEMO
-          </Link>
+    <div className="landing-page mx-auto max-w-6xl px-4">
+      <section className="grid gap-12 py-14 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-10 lg:py-24">
+        <div className="rise-in">
+          <span className="pixel-text inline-flex items-center gap-3 border border-primary/25 bg-primary/5 px-3 py-2 text-[8px] text-primary">
+            <span aria-hidden className="h-1.5 w-1.5 bg-primary" />
+            BUILT FOR SOLANA TRADERS
+          </span>
+          <h1 className="hero-title mt-7">
+            Find the signal.
+            <br />
+            <span className="text-primary">Follow the flow.</span>
+          </h1>
+          <p className="mt-6 max-w-lg text-2xl leading-relaxed text-muted-foreground">
+            Wallets on-chain. Conversations on X. Your next move starts with seeing them together.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link to="/account" className="action-primary">
+              Create account <ArrowRight aria-hidden size={16} />
+            </Link>
+            <Link to="/dashboard" className="action-secondary">
+              Open dashboard <ArrowUpRight aria-hidden size={16} />
+            </Link>
+          </div>
+          <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-base text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <Activity aria-hidden size={13} className="text-primary" />
+              Mainnet data
+            </span>
+            <span className="flex items-center gap-2">
+              <Radio aria-hidden size={13} className="text-primary" />
+              Live wallet & X feeds
+            </span>
+          </div>
         </div>
-
-        <div className="mt-14 grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="SOL / USD" value={data?.priceUsd ? `$${fmt(data.priceUsd)}` : "····"} />
-          <Stat
-            label="24H CHANGE"
-            value={data?.change24h != null ? `${data.change24h > 0 ? "+" : ""}${fmt(data.change24h)}%` : "····"}
-          />
-          <Stat label="NETWORK TPS" value={fmt(data?.tps, 0)} />
-          <Stat label="SLOT" value={fmt(data?.slot, 0)} />
-        </div>
-      </section>
-
-      {/* TICKER */}
-      <section className="overflow-hidden border-y border-border bg-black/70 py-4">
-        <div className="ticker-track flex w-max gap-10 whitespace-nowrap">
-          {[0, 1].map((dup) => (
-            <div key={dup} className="flex gap-10">
-              {integrations.map((i) => (
-                <span key={i.name} className="pixel-text flex items-center gap-3 text-[9px] text-muted-foreground">
-                  <img src={i.logo} alt={`${i.name} logo`} className="h-5 w-5 object-contain" />
-                  {i.name.toUpperCase()}
-                </span>
-              ))}
+        <div className="panel signal-grid relative overflow-hidden border-primary/30 p-5 sm:p-7">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="pixel-text flex items-center gap-2 text-[8px]">
+              <Crosshair aria-hidden size={15} className="text-primary" />
+              THE SIGNAL DESK
             </div>
-          ))}
+            <span className="text-sm text-muted-foreground">WORKSPACE PREVIEW</span>
+          </div>
+          <div className="mt-6 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center border border-primary/30 bg-primary/10 text-primary">
+              <Wallet aria-hidden size={19} />
+            </span>
+            <div>
+              <p className="text-xl">Your watchlist, in focus.</p>
+              <p className="text-base text-muted-foreground">Solana wallets + X lists</p>
+            </div>
+          </div>
+          <div className="mt-6 space-y-3">
+            {[
+              {
+                icon: Wallet,
+                title: "Wallet activity",
+                description: "Balances and signed transactions",
+                tag: "ON-CHAIN",
+              },
+              {
+                icon: Radio,
+                title: "X list feed",
+                description: "The conversations you follow",
+                tag: "SOCIAL",
+              },
+              {
+                icon: Users,
+                title: "Top traders",
+                description: "Explore active wallets on mainnet",
+                tag: "DISCOVER",
+              },
+            ].map(({ icon: Icon, title, description, tag }) => (
+              <div
+                key={title}
+                className="flex items-center gap-3 border border-border bg-black/70 px-3 py-4 sm:px-4"
+              >
+                <Icon aria-hidden size={17} className="shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg">{title}</p>
+                  <p className="text-sm text-muted-foreground">{description}</p>
+                </div>
+                <span className="pixel-text hidden text-[6px] text-primary sm:block">{tag}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex items-center justify-between gap-4 border-t border-border pt-4">
+            <span className="text-base text-muted-foreground">
+              Less tab switching. More context.
+            </span>
+            <ArrowUpRight aria-hidden size={17} className="shrink-0 text-primary" />
+          </div>
         </div>
       </section>
-
-      {/* FEATURES */}
-      <section className="grid gap-4 py-20 md:grid-cols-3">
+      <section
+        aria-label="Solana market and network data"
+        className="grid grid-cols-2 divide-x divide-y divide-border border border-border bg-black/65 sm:grid-cols-4 sm:divide-y-0"
+      >
         {[
+          { label: "SOL / USD", value: data?.priceUsd ? `$${fmt(data.priceUsd)}` : "--" },
           {
-            t: "WALLET TRACKING",
-            d: "Paste any Solana address and stream its balance and signed transactions live, straight from mainnet RPC.",
+            label: "24H CHANGE",
+            value:
+              data?.change24h != null
+                ? `${data.change24h > 0 ? "+" : ""}${fmt(data.change24h)}%`
+                : "--",
           },
-          {
-            t: "X LISTS LIVE",
-            d: "Attach your X lists and watch calls land next to the on-chain fill, timestamped to the same second.",
-          },
-          {
-            t: "DAILY TOP TRADERS",
-            d: "A leaderboard built by scanning finalized blocks and ranking the fee payers moving the most flow today.",
-          },
-        ].map((f, idx) => (
-          <article
-            key={f.t}
-            className="panel rise-in p-6 transition hover:panel-glow"
-            style={{ animationDelay: `${idx * 90}ms` }}
-          >
-            <h2 className="text-xs text-primary">{f.t}</h2>
-            <p className="mt-4 text-lg text-muted-foreground">{f.d}</p>
-          </article>
+          { label: "NETWORK TPS", value: fmt(data?.tps, 0) },
+          { label: "CURRENT SLOT", value: fmt(data?.slot, 0) },
+        ].map(({ label, value }) => (
+          <div key={label} className="min-w-0 px-4 py-5 sm:px-6">
+            <p className="pixel-text text-[7px] text-muted-foreground">{label}</p>
+            <p className="mt-3 break-all font-mono text-lg text-primary sm:text-2xl">{value}</p>
+          </div>
         ))}
       </section>
-
-      {/* INTEGRATIONS */}
-      <section className="py-10">
-        <h2 className="text-center text-base text-foreground">
-          WORKS WITH <span className="text-primary">AXIOM</span>, PADRE.GG, PHOTON
-          <br className="hidden sm:block" /> AND MORE
-        </h2>
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {integrations.map((i) => (
+      {isError && (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Network data is temporarily unavailable.
+        </p>
+      )}
+      <section className="py-12">
+        <p className="pixel-text text-center text-[8px] text-muted-foreground">
+          ALONGSIDE THE TERMINALS YOU ALREADY USE
+        </p>
+        <div className="mt-7 flex flex-wrap justify-center gap-x-8 gap-y-5 sm:justify-between">
+          {integrations.map((item) => (
             <a
-              key={i.name}
-              href={i.href}
+              key={item.name}
+              href={item.href}
               target="_blank"
-              rel="noreferrer noopener"
-              className="panel flex items-start gap-4 p-5 transition hover:panel-glow"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-muted-foreground transition hover:text-primary"
             >
-              <img
-                src={i.logo}
-                alt={`${i.name} official logo`}
-                className="h-9 w-9 shrink-0 object-contain"
-                loading="lazy"
-              />
-              <div>
-                <p className="pixel-text text-[10px] text-foreground">{i.name}</p>
-                <p className="mt-2 text-base text-muted-foreground">{i.blurb}</p>
-              </div>
+              <img src={item.logo} alt="" className="h-6 w-6 object-contain" />
+              <span className="pixel-text text-[8px]">{item.name}</span>
             </a>
           ))}
         </div>
       </section>
-
-      {/* CTA */}
-      <section className="panel panel-glow my-16 flex flex-col items-center gap-6 p-10 text-center">
-        <h2 className="text-base text-foreground">
-          READY TO SEE THE <span className="text-primary">FLOW</span>?
-        </h2>
-        <p className="max-w-xl text-lg text-muted-foreground">
-          Three steps: connect your feeds, pick your wallets, watch it move.
+      <section className="border-t border-border py-14 sm:py-20">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow">A CLEARER VIEW OF THE MARKET</p>
+            <h2 className="mt-5 text-lg sm:text-xl">
+              All your signals.
+              <br />
+              <span className="text-muted-foreground">One place to watch.</span>
+            </h2>
+          </div>
+          <Link to="/get-started" className="inline-flex items-center gap-2 text-base text-primary">
+            How it works <ArrowRight aria-hidden size={15} />
+          </Link>
+        </div>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {[
+            {
+              icon: Wallet,
+              number: "01",
+              title: "WALLET TRACKING",
+              text: "Follow public Solana addresses. Read balances and signed transactions straight from mainnet.",
+            },
+            {
+              icon: Radio,
+              number: "02",
+              title: "X LISTS LIVE",
+              text: "Keep your X lists beside wallet activity, so the conversation stays close to the on-chain context.",
+            },
+            {
+              icon: Crosshair,
+              number: "03",
+              title: "TRADER DISCOVERY",
+              text: "Explore active fee payers from finalized blocks and find the wallets worth a closer look.",
+            },
+          ].map(({ icon: Icon, number, title, text }) => (
+            <article
+              key={title}
+              className="panel group p-6 transition hover:border-primary/50 sm:p-7"
+            >
+              <div className="flex items-center justify-between">
+                <Icon aria-hidden size={23} className="text-primary" />
+                <span className="pixel-text text-[8px] text-muted-foreground">{number}</span>
+              </div>
+              <h3 className="mt-8 text-[10px]">{title}</h3>
+              <p className="mt-4 text-lg leading-relaxed text-muted-foreground">{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="panel panel-glow relative my-4 overflow-hidden p-6 sm:p-10">
+        <div className="grid gap-8 md:grid-cols-[1.4fr_1fr] md:items-center">
+          <div>
+            <p className="eyebrow flex items-center gap-3">
+              <Gift aria-hidden size={16} />
+              LIMERYX REFERRALS
+            </p>
+            <h2 className="mt-5 text-lg sm:text-xl">
+              Trading is better
+              <br />
+              <span className="text-primary">with your circle.</span>
+            </h2>
+            <p className="mt-5 max-w-lg text-xl text-muted-foreground">
+              Get your personal invite link. Follow your referrals and see every stage of your SOL
+              rewards, from review to payout.
+            </p>
+          </div>
+          <div className="border-l-2 border-primary/50 pl-6">
+            <p className="text-xl">Your network, connected.</p>
+            <p className="mt-3 text-base text-muted-foreground">
+              Create an account to see the program status, reward rules, and your referral activity.
+            </p>
+            <Link to="/referrals" className="action-primary mt-6">
+              Explore referrals <ArrowRight aria-hidden size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+      <section className="flex flex-col items-center py-16 text-center sm:py-24">
+        <p className="eyebrow">LESS NOISE. MORE CONTEXT.</p>
+        <h2 className="mt-6 text-lg sm:text-xl">Keep your eyes on the flow.</h2>
+        <p className="mt-5 max-w-xl text-xl text-muted-foreground">
+          Build your watchlist and put the signals that matter in one workspace.
         </p>
-        <Link
-          to="/get-started"
-          className="pixel-text bg-primary px-6 py-4 text-[10px] text-primary-foreground transition hover:bg-accent"
-        >
-          GET STARTED
-        </Link>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link to="/account" className="action-primary">
+            Create account <ArrowRight aria-hidden size={16} />
+          </Link>
+          <Link to="/signup" className="action-secondary">
+            Bot setup
+          </Link>
+        </div>
       </section>
     </div>
   );

@@ -1,19 +1,31 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
+import { useMember } from "@/lib/member-auth";
 
 const links = [
   { to: "/", label: "HOME" },
   { to: "/get-started", label: "GET STARTED" },
   { to: "/dashboard", label: "DASHBOARD" },
+  { to: "/referrals", label: "REFERRALS" },
 ] as const;
 
 export function SiteNav() {
+  const [open, setOpen] = useState(false);
+  const { user } = useMember();
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-black/80 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+      <div className="flex items-center justify-center gap-3 border-b border-primary/25 bg-primary/10 px-4 py-3 text-center">
+        <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 bg-primary" />
+        <p className="pixel-text text-[8px] leading-relaxed text-primary sm:text-[9px]">
+          Groups for traders coming soon!
+        </p>
+      </div>
+      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-4">
         <Logo />
-        <div className="flex items-center gap-4">
-          <div className="hidden items-center gap-5 sm:flex">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="hidden items-center gap-5 lg:flex">
             {links.map((l) => (
               <Link
                 key={l.to}
@@ -27,13 +39,55 @@ export function SiteNav() {
             ))}
           </div>
           <Link
+            to="/account"
+            search={user ? {} : { mode: "login" }}
+            className="pixel-text hidden text-[8px] text-muted-foreground transition hover:text-primary sm:block"
+          >
+            {user ? "ACCOUNT" : "SIGN IN"}
+          </Link>
+          <Link
             to="/signup"
-            className="pixel-text border border-primary bg-primary px-3 py-2 text-[9px] text-primary-foreground transition hover:bg-transparent hover:text-primary"
+            className="pixel-text border border-primary bg-primary px-2 py-2 text-[8px] text-primary-foreground transition hover:bg-transparent hover:text-primary sm:px-3 sm:text-[9px]"
           >
             SIGN UP
           </Link>
+          <button
+            type="button"
+            aria-label={open ? "Close navigation" : "Open navigation"}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            onClick={() => setOpen(!open)}
+            className="p-2 text-foreground lg:hidden"
+          >
+            {open ? <X aria-hidden size={20} /> : <Menu aria-hidden size={20} />}
+          </button>
         </div>
       </nav>
+      {open && (
+        <nav
+          id="mobile-nav"
+          aria-label="Mobile navigation"
+          className="grid gap-1 border-t border-border bg-black px-4 py-3 lg:hidden"
+        >
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={() => setOpen(false)}
+              className="pixel-text px-3 py-3 text-[9px] text-muted-foreground hover:text-primary"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link
+            to="/account"
+            onClick={() => setOpen(false)}
+            className="pixel-text px-3 py-3 text-[9px] text-primary"
+          >
+            {user ? "ACCOUNT" : "ACCOUNT / SIGN IN"}
+          </Link>
+        </nav>
+      )}
     </header>
   );
 }

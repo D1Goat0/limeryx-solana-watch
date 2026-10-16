@@ -13,7 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PixelBackground } from "../components/site/PixelBackground";
 import { SiteNav, SiteFooter } from "../components/site/SiteChrome";
-
+import { MemberProvider } from "../lib/member-auth";
 
 function NotFoundComponent() {
   return (
@@ -132,16 +132,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <PixelBackground />
-      <div className="flex min-h-screen flex-col">
-        <SiteNav />
-        <main className="flex-1">
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </main>
-        <SiteFooter />
-      </div>
+      <MemberProvider>
+        <PixelBackground />
+        <div className="flex min-h-screen flex-col">
+          <SiteNav />
+          <main className="flex-1">
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </main>
+          <SiteFooter />
+        </div>
+      </MemberProvider>
     </QueryClientProvider>
   );
 }
-
